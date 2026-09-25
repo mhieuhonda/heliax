@@ -16,6 +16,12 @@
     "torch/csrc/jit/tensorexpr/operators/matmul.cpp": "e796f6ae239cf13f3de69e7f42d52fc9030b2b98b428bf5c58e28b148ec434e2",
     "torch/optim/adamw.py": "b9cbfb1e2112b61d7aa88b0f8e2a777ddae9cca5e348e231256f1e39f06f1d92",
     "benchmarks/operator_benchmark/pt/softmax_test.py": "352ee55493745544f824197cba687854452b2400a66da8b8a8ee12609b9f54cd",
-    "benchmarks/operator_benchmark/pt/matmul_test.py": "6ea056ea28f8c44709dbbb56b0ae3cd13853da638b26797909760a37b16ea0db"
+    "benchmarks/operator_benchmark/pt/matmul_test.py": "6ea056ea28f8c44709dbbb56b0ae3cd13853da638b26797909760a37b16ea0db",
+    "aten/src/ATen/native/layer_norm.h": "f967d99f8f0909ac5b915580a75669d95f97a5a2739f7e703a4b342b93d088fb",
+    "aten/src/ATen/native/cpu/LogSoftmaxKernelImpl.h": "ab5448a3ce29cb943507683ce4825e5280e7b7b6c0e19a3fc5cedc405bb47d29",
+    "aten/src/ATen/native/Embedding.cpp": "008bd158bbb1a5328db4b95a74047948fb2de4e7d46c6a9d47b6fe1908ce6efe",
+    "benchmarks/tensorexpr/softmax.py": "c67e127e4d05ccdf455f570c02d374d49e0403486fee98a6ca0f00228bb436fa",
+    "benchmarks/tensorexpr/matmul.py": "c912ec733c36174b74fe1276be5e695ab54033caf6411691318f8c2100e369e0",
+    "torch/csrc/jit/tensorexpr/operators/softmax.h": "f10e3308ea27f3e575fb23d1ce8c7a6ecc3557969e272f39ff8274764422a8ff"
   }
 }

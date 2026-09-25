@@ -18,5 +18,7 @@ Selected references cover:
 - TorchScript/tensor-expr softmax and matmul operator structure.
 - AdamW reference implementation.
 - Softmax and matmul benchmark structure.
+- LayerNorm, log-softmax, and embedding reference interfaces.
+- TorchScript/tensor-expr benchmark microprograms.
 
 The copy is kept byte-for-byte at the pinned commit so provenance can be checked. Any Heliax adaptation belongs in `src/heliax/`, not in this directory.
