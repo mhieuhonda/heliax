@@ -1,0 +1,21 @@
+{
+  "project": "PyTorch",
+  "repository": "https://github.com/pytorch/pytorch",
+  "commit": "8bcb4a343ff8e8e5e7c384614bf445164eada82b",
+  "retrieved": "2026-09-25",
+  "license": "BSD-3-Clause",
+  "runtime_use": false,
+  "files": {
+    "LICENSE": "bd018feef8825e88181c84eb7e3aa4eafb8f08a20d9fd6ef948569610c4a3e43",
+    "NOTICE": "c2cc7bf0caec7652c2b460a8a470bea1677f241e4ab8e431df34cf17f5a9fec0",
+    "aten/src/ATen/native/cpu/SoftmaxKernel.h": "80af5d7e1830bf443be844e7962027b80b6811f029779ae51859bf857a1ae69c",
+    "aten/src/ATen/native/cpu/Gelu.h": "5fbc9b67e5b711f56a961342ee3398502bbf718de0747fc3f92eea011989142a",
+    "aten/src/ATen/native/FusedAdam.h": "ca04e618e980e23244fdf3b208266d8c8964bfebe12141185539b313ab73aaa8",
+    "aten/src/ATen/native/quantized/cpu/qgelu.cpp": "7437e80785655db2f6ea3626b303652dcb7997b35cdd560a52b89ff6c1ef9330",
+    "torch/csrc/jit/tensorexpr/operators/softmax.cpp": "58a1d37e995d9362e1c60b0b9faf3ebe6874c1e9826d6b6f9c606727226fc2e9",
+    "torch/csrc/jit/tensorexpr/operators/matmul.cpp": "e796f6ae239cf13f3de69e7f42d52fc9030b2b98b428bf5c58e28b148ec434e2",
+    "torch/optim/adamw.py": "b9cbfb1e2112b61d7aa88b0f8e2a777ddae9cca5e348e231256f1e39f06f1d92",
+    "benchmarks/operator_benchmark/pt/softmax_test.py": "352ee55493745544f824197cba687854452b2400a66da8b8a8ee12609b9f54cd",
+    "benchmarks/operator_benchmark/pt/matmul_test.py": "6ea056ea28f8c44709dbbb56b0ae3cd13853da638b26797909760a37b16ea0db"
+  }
+}
