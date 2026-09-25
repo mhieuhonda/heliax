@@ -39,10 +39,11 @@ jobs:
       - run: python -m pip install --upgrade pip build
       - run: python -m build --wheel --sdist
       - name: Inspect distributions
-        run: python - <<'PY'
-from pathlib import Path
-files = sorted(Path('dist').glob('*'))
-assert any(path.suffix == '.whl' for path in files)
-assert any(path.name.endswith('.tar.gz') for path in files)
-print('\n'.join(path.name for path in files))
-PY
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          files = sorted(Path('dist').glob('*'))
+          assert any(path.suffix == '.whl' for path in files)
+          assert any(path.name.endswith('.tar.gz') for path in files)
+          print('\n'.join(path.name for path in files))
+          PY
