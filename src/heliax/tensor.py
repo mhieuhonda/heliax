@@ -394,20 +394,26 @@ class Tensor:
             output._backward = run_backward
         return output
 
-    def max(self, axis: int | tuple[int, ...] | None = None, keepdims: bool = False) -> Tensor:
+    def max(self, axis: int | None = None, keepdims: bool = False) -> Tensor:
         data = np.max(self._data, axis=axis, keepdims=keepdims)
         output = self._make(data, (self,), lambda: None, "max")
         if output.requires_grad:
 
             def run_backward() -> None:
-                expanded = np.expand_dims(self._data, axis=axis) if axis is not None else self._data
-                mask = expanded == data if axis is not None else self._data == data
-                gradient = np.asarray(output.grad.numpy(), dtype=self._data.dtype)
-                if axis is not None and not keepdims:
-                    gradient = np.expand_dims(gradient, axis=axis)
-                gradient = np.broadcast_to(gradient, expanded.shape) * mask
-                if axis is not None and not keepdims:
-                    gradient = gradient.sum(axis=axis, keepdims=True)
+                if axis is None:
+                    mask = self._data == data
+                    gradient = np.broadcast_to(output.grad.numpy(), self.shape) * mask
+                else:
+                    normalized_axis = axis if axis >= 0 else axis + self.ndim
+                    mask = np.zeros_like(self._data, dtype=bool)
+                    indices = np.argmax(self._data, axis=normalized_axis)
+                    np.put_along_axis(
+                        mask, np.expand_dims(indices, normalized_axis), True, axis=normalized_axis
+                    )
+                    gradient = output.grad.numpy()
+                    if not keepdims:
+                        gradient = np.expand_dims(gradient, normalized_axis)
+                    gradient = np.broadcast_to(gradient, self.shape) * mask
                 _accumulate(self, gradient)
 
             output._backward = run_backward
