@@ -1,4 +1,4 @@
-"""Lightweight timing and parameter utilities."""
+"""Lightweight timing, graph, and memory utilities."""
 
 from __future__ import annotations
 
@@ -6,6 +6,8 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from time import perf_counter
+
+from .tensor import Tensor
 
 
 @dataclass
@@ -34,3 +36,67 @@ def count_parameters(module: object) -> int:
     if not callable(parameters):
         raise TypeError("count_parameters expects a Module with parameters()")
     return sum(parameter.size for parameter in parameters())
+
+
+def memory_bytes(tensor: Tensor) -> int:
+    """Return the raw storage size of a tensor in bytes."""
+
+    if not isinstance(tensor, Tensor):
+        raise TypeError("memory_bytes expects a Tensor")
+    return int(tensor.numpy().nbytes)
+
+
+def graph_summary(tensor: Tensor) -> dict[str, int]:
+    """Count nodes, edges, and retained array storage in a graph."""
+
+    if not isinstance(tensor, Tensor):
+        raise TypeError("graph_summary expects a Tensor")
+    visited: set[int] = set()
+    stack = [tensor]
+    nodes = 0
+    edges = 0
+    storage = 0
+    while stack:
+        current = stack.pop()
+        identity = id(current)
+        if identity in visited:
+            continue
+        visited.add(identity)
+        nodes += 1
+        storage += memory_bytes(current)
+        edges += len(current._prev)
+        stack.extend(current._prev)
+    return {"nodes": nodes, "edges": edges, "storage_bytes": storage}
+
+
+def memory_report(module: object) -> dict[str, int]:
+    parameters = getattr(module, "parameters", None)
+    if not callable(parameters):
+        raise TypeError("memory_report expects a Module with parameters()")
+    parameter_bytes = sum(memory_bytes(parameter) for parameter in parameters())
+    buffer_bytes = 0
+    for _, buffer in getattr(module, "named_buffers", list)():
+        buffer_bytes += int(buffer.nbytes)
+    return {
+        "parameters": count_parameters(module),
+        "parameter_bytes": parameter_bytes,
+        "buffer_bytes": buffer_bytes,
+        "total_bytes": parameter_bytes + buffer_bytes,
+    }
+
+
+def op_histogram(tensor: Tensor) -> dict[str, int]:
+    """Return counts of operation names reachable from ``tensor``."""
+
+    counts: dict[str, int] = {}
+    stack = [tensor]
+    seen: set[int] = set()
+    while stack:
+        current = stack.pop()
+        if id(current) in seen:
+            continue
+        seen.add(id(current))
+        if current._op:
+            counts[current._op] = counts.get(current._op, 0) + 1
+        stack.extend(current._prev)
+    return counts

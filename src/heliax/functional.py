@@ -113,6 +113,135 @@ def scaled_dot_product_attention(
     return weights @ value
 
 
+def _pool2d_shape(
+    value: np.ndarray, kernel: tuple[int, int], stride: tuple[int, int], padding: tuple[int, int]
+):
+    height = (value.shape[2] + 2 * padding[0] - kernel[0]) // stride[0] + 1
+    width = (value.shape[3] + 2 * padding[1] - kernel[1]) // stride[1] + 1
+    if height <= 0 or width <= 0:
+        raise ValueError("pooling kernel is larger than the padded input")
+    return int(height), int(width)
+
+
+def max_pool2d(
+    value: Tensor,
+    kernel_size: int | tuple[int, int],
+    stride: int | tuple[int, int] | None = None,
+    padding: int | tuple[int, int] = 0,
+) -> Tensor:
+    """NCHW max pooling with a custom scatter backward."""
+
+    kernel = (kernel_size, kernel_size) if isinstance(kernel_size, int) else tuple(kernel_size)
+    step = stride if stride is not None else kernel
+    step = (step, step) if isinstance(step, int) else tuple(step)
+    pad = (padding, padding) if isinstance(padding, int) else tuple(padding)
+    if value.ndim != 4 or len(kernel) != 2 or len(step) != 2 or len(pad) != 2:
+        raise ValueError("max_pool2d expects NCHW input and 2D kernel/stride/padding")
+    data = np.pad(
+        value.numpy(), ((0, 0), (0, 0), (pad[0], pad[0]), (pad[1], pad[1])), constant_values=-np.inf
+    )
+    output_height, output_width = _pool2d_shape(value.numpy(), kernel, step, pad)
+    output = np.empty(
+        (value.shape[0], value.shape[1], output_height, output_width), dtype=value.dtype
+    )
+    maxima = np.zeros_like(output, dtype=np.int64)
+    for row in range(output_height):
+        for column in range(output_width):
+            window = data[
+                :,
+                :,
+                row * step[0] : row * step[0] + kernel[0],
+                column * step[1] : column * step[1] + kernel[1],
+            ]
+            flat = window.reshape(window.shape[0], window.shape[1], -1)
+            indices = np.argmax(flat, axis=2)
+            output[:, :, row, column] = np.take_along_axis(flat, indices[..., np.newaxis], axis=2)[
+                ..., 0
+            ]
+            maxima[:, :, row, column] = indices
+    result = value._make(output, (value,), lambda: None, "max_pool2d")
+    if result.requires_grad:
+
+        def run_backward() -> None:
+            gradient = np.zeros_like(value.numpy(), dtype=np.float32)
+            grad_output = result.grad.numpy()
+            for batch in range(value.shape[0]):
+                for channel in range(value.shape[1]):
+                    for row in range(output_height):
+                        for column in range(output_width):
+                            index = int(maxima[batch, channel, row, column])
+                            row_index = row * step[0] - pad[0] + index // kernel[1]
+                            column_index = column * step[1] - pad[1] + index % kernel[1]
+                            if (
+                                0 <= row_index < value.shape[2]
+                                and 0 <= column_index < value.shape[3]
+                            ):
+                                gradient[batch, channel, row_index, column_index] += grad_output[
+                                    batch, channel, row, column
+                                ]
+            _accumulate(value, gradient)
+
+        result._backward = run_backward
+    return result
+
+
+def avg_pool2d(
+    value: Tensor,
+    kernel_size: int | tuple[int, int],
+    stride: int | tuple[int, int] | None = None,
+    padding: int | tuple[int, int] = 0,
+) -> Tensor:
+    """NCHW average pooling with uniform scatter backward."""
+
+    kernel = (kernel_size, kernel_size) if isinstance(kernel_size, int) else tuple(kernel_size)
+    step = stride if stride is not None else kernel
+    step = (step, step) if isinstance(step, int) else tuple(step)
+    pad = (padding, padding) if isinstance(padding, int) else tuple(padding)
+    if value.ndim != 4 or len(kernel) != 2 or len(step) != 2 or len(pad) != 2:
+        raise ValueError("avg_pool2d expects NCHW input and 2D kernel/stride/padding")
+    data = np.pad(
+        value.numpy(), ((0, 0), (0, 0), (pad[0], pad[0]), (pad[1], pad[1])), mode="constant"
+    )
+    output_height, output_width = _pool2d_shape(value.numpy(), kernel, step, pad)
+    output = np.zeros(
+        (value.shape[0], value.shape[1], output_height, output_width), dtype=value.dtype
+    )
+    counts = np.zeros_like(output, dtype=np.float32)
+    for row in range(output_height):
+        for column in range(output_width):
+            window = data[
+                :,
+                :,
+                row * step[0] : row * step[0] + kernel[0],
+                column * step[1] : column * step[1] + kernel[1],
+            ]
+            output[:, :, row, column] = window.mean(axis=(2, 3), dtype=value.dtype)
+            counts[:, :, row, column] = window.shape[2] * window.shape[3]
+    result = value._make(output, (value,), lambda: None, "avg_pool2d")
+    if result.requires_grad:
+
+        def run_backward() -> None:
+            gradient = np.zeros_like(value.numpy(), dtype=np.float32)
+            grad_output = result.grad.numpy() / counts
+            for row in range(output_height):
+                for column in range(output_width):
+                    for kernel_row in range(kernel[0]):
+                        for kernel_column in range(kernel[1]):
+                            row_index = row * step[0] - pad[0] + kernel_row
+                            column_index = column * step[1] - pad[1] + kernel_column
+                            if (
+                                0 <= row_index < value.shape[2]
+                                and 0 <= column_index < value.shape[3]
+                            ):
+                                gradient[:, :, row_index, column_index] += grad_output[
+                                    :, :, row, column
+                                ]
+            _accumulate(value, gradient)
+
+        result._backward = run_backward
+    return result
+
+
 def mean_squared_error(prediction: Tensor, target: Any) -> Tensor:
     target_data = (
         target.numpy() if isinstance(target, Tensor) else np.asarray(target, dtype=prediction.dtype)
@@ -161,6 +290,28 @@ def binary_cross_entropy(logits: Tensor, target: Any, from_logits: bool = True) 
 
         output._backward = run_backward
     return output.mean()
+
+
+def add_relu(left: Tensor, right: Tensor | np.ndarray | float) -> Tensor:
+    """Fused elementwise add + ReLU with a single backward node."""
+
+    right_tensor = right if isinstance(right, Tensor) else Tensor(right, requires_grad=False)
+    left_data = left.numpy()
+    right_data = right_tensor.numpy()
+    data = get_backend().add_relu(left_data, right_data)
+    parents = tuple(value for value in (left, right_tensor) if value.requires_grad)
+    output = left._make(data, parents, lambda: None, "add_relu")
+    if output.requires_grad:
+        mask = (left_data + right_data) > 0
+
+        def run_backward() -> None:
+            grad = output.grad.numpy() * mask
+            _accumulate(left, grad)
+            if right_tensor.requires_grad:
+                _accumulate(right_tensor, grad)
+
+        output._backward = run_backward
+    return output
 
 
 def cross_entropy(logits: Tensor, target: Any, axis: int = -1) -> Tensor:

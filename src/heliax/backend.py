@@ -13,6 +13,8 @@ from typing import Any
 
 import numpy as np
 
+from . import native_ops
+
 DEFAULT_DTYPE = np.float32
 
 
@@ -120,7 +122,29 @@ class NumpyBackend:
     def relu(self, value: np.ndarray) -> np.ndarray:
         return np.maximum(value, 0, dtype=DEFAULT_DTYPE)
 
+    def add_relu(self, left: np.ndarray, right: np.ndarray) -> np.ndarray:
+        if (
+            left.dtype == np.float32
+            and right.dtype == np.float32
+            and native_ops.native_enabled()
+            and native_ops.native_available()
+        ):
+            try:
+                return native_ops.add_relu(left, right)
+            except (RuntimeError, ValueError):
+                pass
+        return np.maximum(left + right, 0, dtype=DEFAULT_DTYPE)
+
     def gelu(self, value: np.ndarray) -> np.ndarray:
+        if (
+            value.dtype == np.float32
+            and native_ops.native_enabled()
+            and native_ops.native_available()
+        ):
+            try:
+                return native_ops.gelu(value)
+            except RuntimeError:
+                pass
         # tanh approximation; deterministic and differentiable in the graph.
         coefficient = np.sqrt(np.asarray(2.0 / np.pi, dtype=value.dtype))
         cubic = value * value * value
@@ -130,6 +154,17 @@ class NumpyBackend:
         return value * self.sigmoid(value)
 
     def softmax(self, value: np.ndarray, axis: int = -1) -> np.ndarray:
+        if (
+            value.ndim >= 1
+            and axis in {-1, value.ndim - 1}
+            and value.dtype == np.float32
+            and native_ops.native_enabled()
+            and native_ops.native_available()
+        ):
+            try:
+                return native_ops.softmax_lastdim(value)
+            except RuntimeError:
+                pass
         shifted = value - np.max(value, axis=axis, keepdims=True)
         exponent = np.exp(shifted, dtype=DEFAULT_DTYPE)
         return exponent / np.sum(exponent, axis=axis, keepdims=True, dtype=DEFAULT_DTYPE)
@@ -150,6 +185,17 @@ class NumpyBackend:
         axes: tuple[int, ...],
         eps: float,
     ) -> np.ndarray:
+        if (
+            len(axes) == 1
+            and axes[0] == value.ndim - 1
+            and value.dtype == np.float32
+            and native_ops.native_enabled()
+            and native_ops.native_available()
+        ):
+            try:
+                return native_ops.layernorm_lastdim(value, weight, bias, eps)
+            except (RuntimeError, ValueError):
+                pass
         mean = np.mean(value, axis=axes, keepdims=True, dtype=DEFAULT_DTYPE)
         variance = np.mean((value - mean) ** 2, axis=axes, keepdims=True, dtype=DEFAULT_DTYPE)
         normalized = (value - mean) / np.sqrt(variance + eps, dtype=DEFAULT_DTYPE)
@@ -182,6 +228,29 @@ class NumpyBackend:
         bias_correction1: float,
         bias_correction2: float,
     ) -> None:
+        if (
+            parameter.dtype == np.float32
+            and gradient.dtype == np.float32
+            and native_ops.native_enabled()
+            and native_ops.native_available()
+        ):
+            try:
+                native_ops.adamw(
+                    parameter,
+                    gradient,
+                    first_moment,
+                    second_moment,
+                    learning_rate=learning_rate,
+                    beta1=beta1,
+                    beta2=beta2,
+                    epsilon=epsilon,
+                    weight_decay=weight_decay,
+                    bias_correction1=bias_correction1,
+                    bias_correction2=bias_correction2,
+                )
+                return
+            except (RuntimeError, ValueError):
+                pass
         first_moment *= beta1
         first_moment += (1.0 - beta1) * gradient
         second_moment *= beta2
@@ -231,7 +300,8 @@ class NumpyBackend:
         return {
             "name": self.name,
             "numpy": np.__version__,
-            "supports_fused_kernels": self.supports_fused_kernels,
+            "supports_fused_kernels": native_ops.native_enabled() and native_ops.native_available(),
+            "native": native_ops.native_info(),
             "threading": "NumPy/BLAS delegated",
         }
 

@@ -10,6 +10,7 @@ A small pinned reference snapshot lives in `third_party/pytorch/` at upstream co
 - GELU and fused-Adam declarations.
 - Quantized GELU reference.
 - TorchScript/tensor-expr softmax and matmul references.
+- LayerNorm, log-softmax, and embedding reference interfaces.
 - AdamW reference and operator benchmark structure.
 - PyTorch `LICENSE` and `NOTICE`.
 
@@ -30,7 +31,16 @@ Heliax now includes:
 
 The Helianthus namespace (`import helianthus`) re-exports the same core for projects that want to grow the library under that name.
 
-## Optional PyTorch path
+## Optional native CPU path
+
+The repository includes a small dependency-free C kernel file and an explicit opt-in loader:
+
+```bash
+python scripts/build_native.py
+HELIAX_NATIVE=1 python -c 'import heliax as hx; print(hx.native_info())'
+```
+
+Native dispatch is **not automatic**: it is enabled only with `HELIAX_NATIVE=1`, and the portable NumPy/BLAS path remains the correctness and default reference. Run `python examples/native_benchmark.py` to measure whether a native kernel is actually faster on the target machine. `HELIAX_DISABLE_NATIVE=1` forces the fallback even when a shared library exists.## Optional PyTorch path
 
 ```bash
 pip install 'heliax[torch]'
