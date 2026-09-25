@@ -60,6 +60,59 @@ def log_softmax(value: Tensor, axis: int = -1) -> Tensor:
     return output
 
 
+def masked_softmax(value: Tensor, mask: Tensor | np.ndarray, axis: int = -1) -> Tensor:
+    """Softmax with ``True`` mask entries excluded from the distribution."""
+
+    mask_data = mask.numpy() if isinstance(mask, Tensor) else np.asarray(mask, dtype=bool)
+    try:
+        broadcast_mask = np.broadcast_to(mask_data, value.shape)
+    except ValueError as error:
+        raise ValueError(
+            f"mask shape {mask_data.shape} is not broadcastable to {value.shape}"
+        ) from error
+    data = np.where(broadcast_mask, -np.inf, value.numpy())
+    maximum = np.max(data, axis=axis, keepdims=True)
+    maximum = np.where(np.isfinite(maximum), maximum, 0.0)
+    exponent = np.where(broadcast_mask, 0.0, np.exp(data - maximum))
+    denominator = np.sum(exponent, axis=axis, keepdims=True, dtype=value.dtype)
+    probabilities = np.divide(
+        exponent,
+        denominator,
+        out=np.zeros_like(exponent, dtype=value.dtype),
+        where=denominator > 0,
+    )
+    output = value._make(probabilities, (value,), lambda: None, "masked_softmax")
+    if output.requires_grad:
+
+        def run_backward() -> None:
+            _accumulate(value, np.where(broadcast_mask, 0.0, output.grad.numpy()))
+
+        output._backward = run_backward
+    return output
+
+
+def scaled_dot_product_attention(
+    query: Tensor,
+    key: Tensor,
+    value: Tensor,
+    mask: Tensor | np.ndarray | None = None,
+    *,
+    scale: float | None = None,
+) -> Tensor:
+    """Differentiable scaled dot-product attention over trailing dimensions."""
+
+    if query.ndim < 2 or key.ndim < 2 or value.ndim < 2:
+        raise ValueError("attention inputs need at least two dimensions")
+    if query.shape[-1] != key.shape[-1] or key.shape[-2] != value.shape[-2]:
+        raise ValueError("query/key/value shapes are incompatible")
+    factor = float(scale if scale is not None else query.shape[-1] ** -0.5)
+    scores = (
+        query @ key.transpose(tuple(range(key.ndim - 2)) + (key.ndim - 1, key.ndim - 2))
+    ) * factor
+    weights = masked_softmax(scores, mask) if mask is not None else softmax(scores, axis=-1)
+    return weights @ value
+
+
 def mean_squared_error(prediction: Tensor, target: Any) -> Tensor:
     target_data = (
         target.numpy() if isinstance(target, Tensor) else np.asarray(target, dtype=prediction.dtype)
@@ -147,6 +200,68 @@ def cross_entropy(logits: Tensor, target: Any, axis: int = -1) -> Tensor:
                 axis=axis,
             )
             _accumulate(logits, probabilities)
+
+        output._backward = run_backward
+    return output
+
+
+def fused_linear_bias(
+    value: Tensor,
+    weight: Tensor,
+    bias: Tensor | None = None,
+) -> Tensor:
+    """Compute ``value @ weight.T + bias`` as one autograd node.
+
+    Fusing the matmul and bias addition reduces graph nodes and temporary
+    arrays on a hot inference/training path while keeping the same semantics
+    as separate Tensor operations.
+    """
+
+    input_data = value.numpy()
+    weight_data = weight.numpy()
+    output_data = np.matmul(input_data, np.swapaxes(weight_data, -1, -2))
+    if bias is not None:
+        output_data = output_data + bias.numpy()
+    parents = (value, weight) + ((bias,) if bias is not None else ())
+    output = value._make(output_data, parents, lambda: None, "fused_linear_bias")
+    if output.requires_grad:
+
+        def run_backward() -> None:
+            grad = output.grad.numpy()
+            _accumulate(value, np.matmul(grad, weight_data))
+            flat_grad = grad.reshape(-1, grad.shape[-1])
+            flat_input = input_data.reshape(-1, input_data.shape[-1])
+            _accumulate(weight, np.matmul(np.swapaxes(flat_grad, 0, 1), flat_input))
+            if bias is not None:
+                _accumulate(bias, np.sum(grad, axis=tuple(range(grad.ndim - 1)), dtype=np.float32))
+
+        output._backward = run_backward
+    return output
+
+
+def fused_linear_gelu(
+    value: Tensor,
+    weight: Tensor,
+    bias: Tensor | None = None,
+) -> Tensor:
+    """Fused linear projection plus the tanh approximation of GELU."""
+
+    backend = get_backend()
+    linear = fused_linear_bias(value, weight, bias)
+    data = backend.gelu(linear.numpy())
+    output = linear._make(data, (linear,), lambda: None, "fused_linear_gelu")
+    if output.requires_grad:
+        coefficient = np.sqrt(np.asarray(2.0 / np.pi, dtype=linear.dtype))
+
+        def run_backward() -> None:
+            x = linear.numpy()
+            cubic = x**3
+            inner = coefficient * (x + 0.044715 * cubic)
+            tanh_value = np.tanh(inner)
+            derivative = 0.5 * (1.0 + tanh_value) + 0.5 * x * (
+                1.0 - tanh_value**2
+            ) * coefficient * (1.0 + 3 * 0.044715 * x**2)
+            _accumulate(linear, output.grad.numpy() * derivative)
 
         output._backward = run_backward
     return output

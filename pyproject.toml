@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "heliax"
-version = "0.1.0"
+version = "0.2.0"
 description = "A performance-first tensor, autodiff, and neural network library for Python."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -25,6 +25,7 @@ dependencies = ["numpy>=1.24"]
 
 [project.optional-dependencies]
 test = ["pytest>=8.0"]
+torch = ["torch>=2.2"]
 dev = ["pytest>=8.0", "build>=1.2", "ruff>=0.6"]
 
 [project.urls]

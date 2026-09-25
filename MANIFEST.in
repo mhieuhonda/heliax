@@ -1,0 +1,8 @@
+include THIRD_PARTY_NOTICES.md
+include CHANGELOG.md
+include CONTRIBUTING.md
+include SECURITY.md
+recursive-include third_party/pytorch *
+recursive-include docs *.md
+recursive-include examples *.py
+recursive-include tests *.py

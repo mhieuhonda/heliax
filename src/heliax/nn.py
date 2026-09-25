@@ -120,10 +120,18 @@ class Linear(Module):
             raise ValueError(
                 f"Linear expected last dimension {self.in_features}, got {value.shape[-1] if value.shape else None}"
             )
-        output = value @ self.weight.transpose((1, 0))
-        if self.bias is not None:
-            output = output + self.bias
-        return output
+        return F.fused_linear_bias(value, self.weight, self.bias)
+
+
+class FusedLinearGELU(Linear):
+    """Linear + GELU with one fused forward node."""
+
+    def forward(self, value: Tensor) -> Tensor:
+        if value.shape[-1] != self.in_features:
+            raise ValueError(
+                f"FusedLinearGELU expected last dimension {self.in_features}, got {value.shape[-1] if value.shape else None}"
+            )
+        return F.fused_linear_gelu(value, self.weight, self.bias)
 
 
 class LayerNorm(Module):

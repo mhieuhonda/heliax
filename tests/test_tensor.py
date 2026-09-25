@@ -48,6 +48,18 @@ def test_no_grad_and_detach():
     assert value.grad is None
 
 
+def test_clone_and_inplace_operations():
+    value = hx.tensor([1.0, 2.0], requires_grad=True)
+    clone = value.clone()
+    clone.sum().backward()
+    assert np.allclose(value.grad.numpy(), [1.0, 1.0])
+    value.zero_grad()
+    value.add_(1.0).mul_(2.0)
+    assert np.allclose(value.numpy(), [4.0, 6.0])
+    assert value.numel == 2
+    assert value.is_contiguous
+
+
 def test_error_on_non_scalar_backward():
     value = hx.tensor([1.0, 2.0], requires_grad=True)
     with pytest.raises(RuntimeError):

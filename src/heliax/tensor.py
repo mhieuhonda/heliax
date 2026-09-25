@@ -150,17 +150,50 @@ class Tensor:
         return Tensor(self._data.copy(), requires_grad=False)
 
     def clone(self) -> Tensor:
-        result = self.detach()
-        if self.requires_grad and _GRAD_ENABLED:
-            return self._make(
-                self._data.copy(),
-                (self,),
-                lambda: _accumulate(
-                    self, result.grad.numpy() if result.grad else np.zeros_like(self._data)
-                ),
-                "clone",
-            )
-        return result
+        output = self._make(self._data.copy(), (self,), lambda: None, "clone")
+        if output.requires_grad:
+
+            def run_backward() -> None:
+                _accumulate(self, output.grad.numpy())
+
+            output._backward = run_backward
+        return output
+
+    @property
+    def numel(self) -> int:
+        return self.size
+
+    @property
+    def is_contiguous(self) -> bool:
+        return bool(self._data.flags.c_contiguous)
+
+    def contiguous(self) -> Tensor:
+        return self if self.is_contiguous else self.clone()
+
+    def copy_(self, other: Tensor | np.ndarray) -> Tensor:
+        source = other.numpy() if isinstance(other, Tensor) else np.asarray(other)
+        if source.shape != self.shape:
+            raise ValueError(f"copy_ shape mismatch: {source.shape} != {self.shape}")
+        self._data[...] = source
+        return self
+
+    def zero_(self) -> Tensor:
+        self._data.fill(0)
+        return self
+
+    def fill_(self, value: Any) -> Tensor:
+        self._data.fill(value)
+        return self
+
+    def add_(self, other: Tensor | np.ndarray | float, *, alpha: float = 1.0) -> Tensor:
+        source = other.numpy() if isinstance(other, Tensor) else np.asarray(other)
+        self._data += alpha * source
+        return self
+
+    def mul_(self, other: Tensor | np.ndarray | float) -> Tensor:
+        source = other.numpy() if isinstance(other, Tensor) else np.asarray(other)
+        self._data *= source
+        return self
 
     def zero_grad(self) -> None:
         self.grad = None

@@ -1,6 +1,17 @@
 """Heliax: a performance-first tensor and neural network library for Python."""
 
-from . import autograd, backend, data, functional, nn, optim, profiler, quantization, serialization
+from . import (
+    autograd,
+    backend,
+    data,
+    functional,
+    nn,
+    optim,
+    profiler,
+    quantization,
+    serialization,
+    torch_interop,
+)
 from .autograd import gradcheck
 from .backend import available_backends, backend_info, get_backend, set_backend
 from .data import DataLoader, TensorDataset, fit, seed_everything
@@ -11,11 +22,15 @@ from .functional import (
     cross_entropy,
     dropout,
     embedding,
+    fused_linear_bias,
+    fused_linear_gelu,
     gelu,
     log_softmax,
+    masked_softmax,
     mean_absolute_error,
     mean_squared_error,
     relu,
+    scaled_dot_product_attention,
     sigmoid,
     silu,
     softmax,
@@ -29,6 +44,7 @@ from .nn import (
     Dropout,
     Embedding,
     Flatten,
+    FusedLinearGELU,
     LayerNorm,
     Linear,
     LogSoftmax,
@@ -66,8 +82,9 @@ from .tensor import (
     tensor,
     zeros,
 )
+from .torch_interop import TorchAccelerator, from_torch, to_torch, torch_available, torch_version
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     "GELU",
@@ -81,6 +98,7 @@ __all__ = [
     "Dropout",
     "Embedding",
     "Flatten",
+    "FusedLinearGELU",
     "LayerNorm",
     "Linear",
     "LogSoftmax",
@@ -99,6 +117,7 @@ __all__ = [
     "Tanh",
     "Tensor",
     "TensorDataset",
+    "TorchAccelerator",
     "arange",
     "autograd",
     "available_backends",
@@ -119,8 +138,11 @@ __all__ = [
     "enable_grad",
     "fit",
     "from_numpy",
+    "from_torch",
     "full",
     "functional",
+    "fused_linear_bias",
+    "fused_linear_gelu",
     "gelu",
     "get_backend",
     "gradcheck",
@@ -128,6 +150,7 @@ __all__ = [
     "load_checkpoint",
     "load_state_dict",
     "log_softmax",
+    "masked_softmax",
     "mean_absolute_error",
     "mean_squared_error",
     "nn",
@@ -143,6 +166,7 @@ __all__ = [
     "relu",
     "save_checkpoint",
     "save_state_dict",
+    "scaled_dot_product_attention",
     "seed_everything",
     "serialization",
     "set_backend",
@@ -152,5 +176,9 @@ __all__ = [
     "stack",
     "tanh",
     "tensor",
+    "to_torch",
+    "torch_available",
+    "torch_interop",
+    "torch_version",
     "zeros",
 ]
