@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "heliax"
+version = "0.1.0"
+description = "A performance-first tensor, autodiff, and neural network library for Python."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [{ name = "Hieu Louis", email = "mhieuhonda@users.noreply.github.com" }]
+keywords = ["machine-learning", "deep-learning", "autograd", "tensor", "numpy", "performance"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = ["numpy>=1.24"]
+
+[project.optional-dependencies]
+test = ["pytest>=8.0"]
+dev = ["pytest>=8.0", "build>=1.2", "ruff>=0.6"]
+
+[project.urls]
+Homepage = "https://github.com/mhieuhonda/heliax"
+Source = "https://github.com/mhieuhonda/heliax"
+Issues = "https://github.com/mhieuhonda/heliax/issues"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+include-package-data = true
+
+[tool.setuptools.package-data]
+heliax = ["py.typed"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
