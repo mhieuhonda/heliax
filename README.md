@@ -6,15 +6,18 @@ Heliax is a new, original Python deep-learning library built around a simple pro
 
 Heliax does **not** claim to beat PyTorch on every workload. PyTorch has years of ecosystem investment and a mature CUDA/distributed stack. Heliax is being built as a focused alternative for people who want a readable core, a small dependency surface, and a path toward fused/native kernels.
 
-## What is implemented in 0.1
+## What is implemented in 0.2
 
 - N-dimensional `Tensor` with broadcasting, views, dtype conversion, and in-place-free operations.
 - Reverse-mode automatic differentiation with graph traversal, gradient accumulation, `no_grad`, and `gradcheck`.
-- `Linear`, `Conv2d`, `LayerNorm`, `Embedding`, `MultiheadAttention`, `ReLU`, `GELU`, `SiLU`, `Sigmoid`, `Tanh`, `Dropout`, and `Sequential`.
+- `Linear`, `Conv2d`, `LayerNorm`, `Embedding`, `MultiheadAttention`, `FusedLinearGELU`, `ReLU`, `GELU`, `SiLU`, `Sigmoid`, `Tanh`, `Dropout`, and `Sequential`.
 - `SGD`, `Nesterov SGD`, `Adam`, `AdamW`, and `RMSProp`; gradient clipping; cosine/step schedules.
-- MSE, cross-entropy, binary cross-entropy, softmax, log-softmax, and functional APIs.
+- MSE, cross-entropy, binary cross-entropy, softmax, masked softmax, scaled dot-product attention, and functional APIs.
 - 4-bit/8-bit symmetric and affine weight quantization with compression reporting.
 - NPZ state-dict/checkpoint serialization and a small training loop helper.
+- Optional `TorchAccelerator` interop behind the `torch` extra; PyTorch is never a required dependency.
+- A `helianthus` compatibility namespace re-exports the same core.
+- A pinned, license-preserving PyTorch reference snapshot under `third_party/pytorch/`.
 - Backend registry and environment reporting. NumPy is the default; a native backend can be added without changing the public Tensor API.
 - Focused tests, gradient checks, a benchmark script, packaging, and CI.
 
@@ -61,6 +64,28 @@ for x, y in loader:
 4. **Make fusion a future primitive, not a rewrite.** The backend boundary is designed for Triton, Rust, C++, or accelerator kernels later.
 5. **Measure honestly.** `examples/benchmark.py` reports throughput and memory shape instead of promising magic.
 
+## PyTorch and Helianthus
+
+Heliax vendors a small, pinned set of BSD-3-Clause PyTorch reference files with full provenance in `third_party/pytorch/`; it does not copy the whole framework or hide its dependencies. The adapted paths are written in Heliax itself: fused linear+bias, fused linear+GELU, masked softmax, attention composition, and low-allocation tensor utilities.
+
+The optional interop is explicit:
+
+```python
+import heliax as hx
+
+if hx.torch_available():
+    accelerator = hx.TorchAccelerator(device="cpu")
+    print(accelerator.info())
+```
+
+Projects that want the Helianthus namespace can use:
+
+```python
+import helianthus as hx
+```
+
+See [`docs/pytorch-integration.md`](docs/pytorch-integration.md) and [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+
 ## Run tests
 
 ```bash
@@ -89,7 +114,10 @@ heliax/
 │   ├── optim.py        # optimizers and schedulers
 │   ├── data.py         # batching and seed utilities
 │   ├── profiler.py     # lightweight operation profiler
+│   ├── torch_interop.py # optional PyTorch accelerator facade
 │   └── serialization.py
+├── src/helianthus/     # compatibility namespace
+├── third_party/pytorch # pinned BSD reference snapshot
 ├── tests/
 ├── examples/
 ├── docs/

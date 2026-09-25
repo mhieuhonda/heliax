@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.0 — 2026-09-25
+
+### Added
+
+- Pinned BSD PyTorch reference snapshot with preserved LICENSE/NOTICE and provenance.
+- Optional `TorchAccelerator` interop behind the `torch` extra.
+- `helianthus` compatibility namespace.
+- Fused linear+bias and linear+GELU autograd nodes.
+- Numerically safe masked softmax and scaled dot-product attention.
+- Contiguous/clone/in-place tensor utilities for lower-allocation loops.
+
 ## 0.1.0 — 2026-09-25
 
 ### Added

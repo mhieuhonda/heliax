@@ -32,6 +32,7 @@ jobs:
     needs: test
     steps:
       - uses: actions/checkout@v4
+      - run: python scripts/verify_vendored.py
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"

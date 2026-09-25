@@ -12,13 +12,17 @@ User code
   ├── nn.Module tree
   ├── optim.Optimizer
   ├── quantization / inference utilities
+  ├── torch_interop (optional accelerator facade)
   └── serialization / profiler
+
+External reference
+  └── third_party/pytorch (pinned BSD files, not runtime-imported)
 
 Backend boundary
   └── NumPyBackend now
       ├── future fused C++ extension
       ├── future Rust/C ABI kernel registry
-      └── future accelerator backend
+      └── optional TorchAccelerator for compatibility/benchmarks
 ```
 
 ## Tensor model

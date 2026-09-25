@@ -10,17 +10,19 @@
 
 ## v0.2 — less Python overhead
 
-- Operation counters and memory/latency profiler
-- Fused NumPy kernels for common forward/backward paths
-- Better in-place-safe internal buffers
-- Strided-layout benchmark suite
+- Fused linear+bias and linear+GELU autograd nodes
+- Masked softmax and scaled dot-product attention helpers
+- Contiguous/clone/in-place tensor utilities
+- Optional TorchAccelerator and Helianthus namespace
+- Pinned BSD PyTorch reference snapshot with provenance checks
 
 ## v0.3 — native acceleration
 
 - Optional C ABI extension boundary
-- Fused linear + activation and normalized cross-entropy candidates
+- Fused native linear + activation and normalized cross-entropy candidates
 - Quantized int8 weights for CPU inference
 - Pluggable accelerator capability detection
+- Benchmark-gated native/Torch kernel selection
 
 ## v1.0 — ecosystem depth
 
