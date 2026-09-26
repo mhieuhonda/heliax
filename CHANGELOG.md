@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.4 — 2026-09-25
+
+### Added
+
+- QuantizedLinear inference module with persistent integer weights and state-dict support.
+- Additional linalg and quantization regression coverage.
+
 ## 0.3.3 — 2026-09-25
 
 ### Added
