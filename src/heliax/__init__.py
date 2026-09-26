@@ -150,11 +150,11 @@ from .tensor import (
 )
 from .torch_backend import TorchBackend, get_torch_backend, torch_backend_available
 from .torch_interop import TorchAccelerator, from_torch, to_torch, torch_available, torch_version
-from .training import Trainer
+from .training import CheckpointManager, Trainer
 from .workspace import Workspace
 from .workspace import workspace as workspace_context
 
-__version__ = "0.6.26"
+__version__ = "0.6.27"
 
 __all__ = [
     "GELU",
@@ -169,6 +169,7 @@ __all__ = [
     "AvgPool2d",
     "BatchNorm1d",
     "BatchNorm2d",
+    "CheckpointManager",
     "Conv1d",
     "Conv2d",
     "CosineAnnealingLR",

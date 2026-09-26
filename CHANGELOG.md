@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.27 — 2026-09-25
+
+### Added
+
+- `CheckpointManager` for recent/best atomic checkpoint retention and loading.
+- Checkpoint manager regression coverage for pruning, metadata, and best-metric selection.
+
 ## 0.6.26 — 2026-09-25
 
 ### Added

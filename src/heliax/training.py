@@ -9,6 +9,77 @@ from .optim import clip_grad_norm_, step_scheduler
 from .tensor import Tensor, no_grad
 
 
+class CheckpointManager:
+    """Keep recent and best atomic NPZ checkpoints for a training run."""
+
+    def __init__(
+        self,
+        root: str | Any,
+        model: Any,
+        optimizer: Any,
+        *,
+        keep_last: int = 2,
+        mode: str = "min",
+        metadata: dict[str, Any] | None = None,
+    ) -> None:
+        from pathlib import Path
+
+        if keep_last <= 0 or mode not in {"min", "max"}:
+            raise ValueError("CheckpointManager requires keep_last > 0 and mode min/max")
+        self.root = Path(root)
+        self.model = model
+        self.optimizer = optimizer
+        self.keep_last = int(keep_last)
+        self.mode = mode
+        self.metadata = dict(metadata or {})
+        self.counter = 0
+        self.best_metric: float | None = None
+        self.best_path: Any | None = None
+        self.paths: list[Any] = []
+
+    def save(self, metric: float | None = None, metadata: dict[str, Any] | None = None) -> Any:
+        from .serialization import save_checkpoint
+
+        self.root.mkdir(parents=True, exist_ok=True)
+        self.counter += 1
+        path = self.root / f"checkpoint-{self.counter:06d}.npz"
+        values = dict(self.metadata)
+        values.update(metadata or {})
+        if metric is not None:
+            values["metric"] = float(metric)
+        save_checkpoint(path, self.model, self.optimizer, metadata=values)
+        self.paths.append(path)
+        if metric is not None and (
+            self.best_metric is None
+            or (self.mode == "min" and metric < self.best_metric)
+            or (self.mode == "max" and metric > self.best_metric)
+        ):
+            self.best_metric = float(metric)
+            self.best_path = path
+        self._prune()
+        return path
+
+    def _prune(self) -> None:
+        keep = set(self.paths[-self.keep_last :])
+        if self.best_path is not None:
+            keep.add(self.best_path)
+        for path in self.paths:
+            if path not in keep and path.exists():
+                path.unlink()
+        self.paths = [path for path in self.paths if path.exists()]
+
+    def load_best(self) -> dict[str, Any]:
+        from .serialization import load_checkpoint
+
+        if self.best_path is None:
+            raise RuntimeError("no best checkpoint has been saved")
+        return load_checkpoint(self.best_path, self.model, self.optimizer)
+
+    @property
+    def latest_path(self) -> Any | None:
+        return self.paths[-1] if self.paths else None
+
+
 class Trainer:
     """Small explicit trainer for Heliax models.
 
