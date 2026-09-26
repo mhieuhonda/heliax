@@ -19,3 +19,13 @@ def test_torch_backend_dispatches_core_kernels():
         assert norm(value).shape == value.shape
     finally:
         hx.set_backend(previous)
+
+
+@pytest.mark.skipif(not hx.torch_backend_available(), reason="PyTorch extra is not installed")
+def test_torch_backend_device_selector():
+    previous = hx.backend._ACTIVE_BACKEND
+    try:
+        hx.set_backend("torch:cpu")
+        assert hx.backend.get_backend().device == "cpu"
+    finally:
+        hx.set_backend(previous)

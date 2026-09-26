@@ -320,6 +320,10 @@ def set_backend(name: str) -> None:
         from .torch_backend import get_torch_backend
 
         register_backend(name, get_torch_backend())
+    elif name.startswith("torch:") and name not in _BACKENDS:
+        from .torch_backend import get_torch_backend
+
+        register_backend(name, get_torch_backend(name.split(":", 1)[1]))
     if name not in _BACKENDS:
         raise KeyError(f"Unknown Heliax backend: {name}")
     _ACTIVE_BACKEND = name

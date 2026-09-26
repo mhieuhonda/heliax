@@ -6,6 +6,7 @@ Heliax keeps PyTorch optional. The `torch` extra enables explicit conversion, th
 import heliax as hx
 
 hx.set_backend("torch")       # explicit, never automatic
+hx.set_backend("torch:cuda")  # explicit device selection
 print(hx.backend_info())
 ```
 

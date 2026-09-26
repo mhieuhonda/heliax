@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.7 — 2026-09-25
+
+### Added
+
+- Explicit `torch:<device>` backend selection in the backend registry.
+- Device-selection tests and Torch compatibility documentation.
+
 ## 0.5.6 — 2026-09-25
 
 ### Added
