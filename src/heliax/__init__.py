@@ -108,6 +108,7 @@ from .profiler import (
     profile,
 )
 from .quantization import (
+    QuantizedLinear,
     QuantizedTensor,
     compression_ratio,
     dequantize,
@@ -174,6 +175,7 @@ __all__ = [
     "PositionalEncoding",
     "PrefetchLoader",
     "ProfileResult",
+    "QuantizedLinear",
     "QuantizedTensor",
     "RMSProp",
     "ReLU",

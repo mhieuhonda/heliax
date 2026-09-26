@@ -5,6 +5,7 @@
 ### Added
 
 - Grouped and dilated Conv2d paths.
+- QuantizedLinear inference module with persistent integer weights.
 - ModelEMA, explicit precision policy, and dynamic gradient scaling.
 - Fresh-optimizer checkpoint state restoration and expanded serialization tests.
 - Additional elementwise, pooling, normalization, recurrent, and attention regression coverage.
