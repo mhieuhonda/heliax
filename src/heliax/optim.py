@@ -268,6 +268,51 @@ class RMSProp(Optimizer):
                 )
 
 
+class ModelEMA:
+    """Exponential moving average of model parameters."""
+
+    def __init__(self, module: Any, decay: float = 0.999, warmup_steps: int = 0) -> None:
+        if not 0.0 <= decay < 1.0 or warmup_steps < 0:
+            raise ValueError("ModelEMA decay/warmup configuration is invalid")
+        self.decay = float(decay)
+        self.warmup_steps = int(warmup_steps)
+        self.step_count = 0
+        self.shadow = {
+            name: parameter.numpy().copy() for name, parameter in module.named_parameters()
+        }
+
+    def update(self, module: Any) -> None:
+        self.step_count += 1
+        decay = (
+            min(self.decay, (1.0 + self.step_count) / (10.0 + self.step_count))
+            if self.warmup_steps
+            else self.decay
+        )
+        for name, parameter in module.named_parameters():
+            if name in self.shadow:
+                self.shadow[name] = decay * self.shadow[name] + (1.0 - decay) * parameter.numpy()
+
+    def copy_to(self, module: Any) -> None:
+        with no_grad():
+            for name, parameter in module.named_parameters():
+                if name in self.shadow:
+                    parameter.data = self.shadow[name].copy()
+
+    def state_dict(self) -> dict[str, Any]:
+        return {
+            "decay": self.decay,
+            "warmup_steps": self.warmup_steps,
+            "step_count": self.step_count,
+            "shadow": {key: value.copy() for key, value in self.shadow.items()},
+        }
+
+    def load_state_dict(self, state: dict[str, Any]) -> None:
+        self.decay = float(state["decay"])
+        self.warmup_steps = int(state["warmup_steps"])
+        self.step_count = int(state["step_count"])
+        self.shadow = {key: np.asarray(value).copy() for key, value in state["shadow"].items()}
+
+
 def clip_grad_norm_(
     parameters: Iterable[Parameter], max_norm: float, norm_type: float = 2.0
 ) -> Tensor:

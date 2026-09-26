@@ -5,6 +5,7 @@
 ### Added
 
 - GroupedConv2d built from composable Conv2d blocks.
+- ModelEMA parameter averaging with state-dict support.
 - Additional container, convolution, and regression coverage.
 
 ## 0.3.1 — 2026-09-25
