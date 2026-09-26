@@ -80,6 +80,12 @@ def _reduce_gradient(
     return np.broadcast_to(expanded, shape).copy()
 
 
+def _index_grid(shape: tuple[int, ...], axis: int, index: np.ndarray) -> tuple[np.ndarray, ...]:
+    grids = list(np.ogrid[tuple(slice(0, size) for size in shape)])
+    grids[axis] = index
+    return tuple(np.broadcast_to(grid, shape) for grid in grids)
+
+
 def _accumulate(tensor: Tensor, gradient: np.ndarray) -> None:
     if not tensor.requires_grad:
         return
@@ -538,6 +544,54 @@ class Tensor:
 
             output._backward = run_backward
         return output
+
+    def gather(self, axis: int, index: Tensor | np.ndarray) -> Tensor:
+        index_data = (
+            index.numpy() if isinstance(index, Tensor) else np.asarray(index, dtype=np.int64)
+        )
+        if index_data.ndim != self.ndim:
+            raise ValueError("gather index must have the same rank as the input")
+        normalized_axis = axis if axis >= 0 else axis + self.ndim
+        data = np.take_along_axis(self._data, index_data, axis=normalized_axis)
+        output = self._make(data, (self,), lambda: None, "gather")
+        if output.requires_grad:
+
+            def run_backward() -> None:
+                gradient = np.zeros_like(self._data, dtype=output.grad.dtype)
+                np.add.at(
+                    gradient,
+                    _index_grid(self.shape, normalized_axis, index_data),
+                    output.grad.numpy(),
+                )
+                _accumulate(self, gradient)
+
+            output._backward = run_backward
+        return output
+
+    def scatter_add(self, dim: int, index: Tensor | np.ndarray, src: Tensor | np.ndarray) -> Tensor:
+        index_data = (
+            index.numpy() if isinstance(index, Tensor) else np.asarray(index, dtype=np.int64)
+        )
+        src_data = (
+            src.numpy() if isinstance(src, Tensor) else np.asarray(src, dtype=self._data.dtype)
+        )
+        if index_data.ndim != self.ndim or src_data.shape != index_data.shape:
+            raise ValueError("scatter_add index and src shapes must match the input rank/shape")
+        output = np.zeros_like(self._data)
+        np.add.at(output, _index_grid(self.shape, dim, index_data), src_data)
+        parents = (self, src) if isinstance(src, Tensor) else (self,)
+        result = self._make(output, parents, lambda: None, "scatter_add")
+        if result.requires_grad:
+
+            def run_backward() -> None:
+                grad = result.grad.numpy()
+                _accumulate(self, grad)
+                if isinstance(src, Tensor):
+                    source_grad = grad[_index_grid(self.shape, dim, index_data)]
+                    _accumulate(src, source_grad)
+
+            result._backward = run_backward
+        return result
 
     def split(self, split_size_or_sections: int | Sequence[int], axis: int = 0) -> list[Tensor]:
         if not self.shape:

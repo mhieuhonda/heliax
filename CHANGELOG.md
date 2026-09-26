@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.6 — 2026-09-25
+
+### Added
+
+- Differentiable `gather` and `scatter_add` tensor operations.
+- Advanced indexing regression coverage.
+
 ## 0.4.5 — 2026-09-25
 
 ### Added
