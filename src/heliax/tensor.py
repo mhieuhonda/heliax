@@ -443,6 +443,21 @@ class Tensor:
     def sign(self) -> Tensor:
         return self._unary(np.sign, lambda g, x: np.zeros_like(x), "sign")
 
+    def clamp(self, minimum: float | None = None, maximum: float | None = None) -> Tensor:
+        if minimum is None and maximum is None:
+            return self
+        if minimum is not None and maximum is not None and minimum > maximum:
+            raise ValueError("clamp minimum cannot exceed maximum")
+        return self._unary(
+            lambda x: np.clip(x, minimum, maximum),
+            lambda g, x: (
+                g
+                * ((x >= minimum) if minimum is not None else True)
+                * ((x <= maximum) if maximum is not None else True)
+            ),
+            "clamp",
+        )
+
     def minimum(self, other: Any) -> Tensor:
         other_tensor = other if isinstance(other, Tensor) else Tensor(other, requires_grad=False)
         return self._binary(

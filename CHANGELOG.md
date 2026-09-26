@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.26 — 2026-09-25
+
+### Added
+
+- Differentiable `Tensor.clamp` with minimum/maximum validation and gradient masking.
+- Regression coverage for clamp alongside minimum/maximum operations.
+
 ## 0.6.25 — 2026-09-25
 
 ### Added
