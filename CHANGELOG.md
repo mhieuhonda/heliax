@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.14 — 2026-09-25
+
+### Added
+
+- Module-level `MSELoss`, `L1Loss`, `HuberLoss`, `BCEWithLogitsLoss`, and `BCELoss` APIs.
+- Regression coverage for common loss module usage.
+
 ## 0.6.13 — 2026-09-25
 
 ### Added

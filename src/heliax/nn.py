@@ -1050,6 +1050,35 @@ class CrossEntropyLoss(Module):
         return F.fused_cross_entropy(logits, target, self.axis)
 
 
+class MSELoss(Module):
+    def forward(self, prediction: Tensor, target: Any) -> Tensor:
+        return F.mean_squared_error(prediction, target)
+
+
+class L1Loss(Module):
+    def forward(self, prediction: Tensor, target: Any) -> Tensor:
+        return F.mean_absolute_error(prediction, target)
+
+
+class HuberLoss(Module):
+    def __init__(self, delta: float = 1.0) -> None:
+        super().__init__()
+        self.delta = float(delta)
+
+    def forward(self, prediction: Tensor, target: Any) -> Tensor:
+        return F.huber_loss(prediction, target, self.delta)
+
+
+class BCEWithLogitsLoss(Module):
+    def forward(self, logits: Tensor, target: Any) -> Tensor:
+        return F.binary_cross_entropy(logits, target, from_logits=True)
+
+
+class BCELoss(Module):
+    def forward(self, probabilities: Tensor, target: Any) -> Tensor:
+        return F.binary_cross_entropy(probabilities, target, from_logits=False)
+
+
 class Dropout(Module):
     def __init__(self, probability: float = 0.5, *, rng: np.random.Generator | None = None) -> None:
         super().__init__()

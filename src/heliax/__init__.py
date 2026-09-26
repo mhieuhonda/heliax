@@ -149,7 +149,7 @@ from .training import Trainer
 from .workspace import Workspace
 from .workspace import workspace as workspace_context
 
-__version__ = "0.6.13"
+__version__ = "0.6.14"
 
 __all__ = [
     "GELU",
