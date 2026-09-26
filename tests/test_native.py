@@ -72,6 +72,20 @@ def test_native_kernels_match_numpy_reference():
     )
     assert np.all(parameter < 1.0)
     assert np.all(first > 0.0) and np.all(second > 0.0)
+    sgd_parameter = np.ones(5, dtype=np.float32)
+    sgd_gradient = np.arange(1, 6, dtype=np.float32)
+    sgd_momentum = np.zeros(5, dtype=np.float32)
+    hx.native_ops.sgd(
+        sgd_parameter,
+        sgd_gradient,
+        sgd_momentum,
+        learning_rate=0.01,
+        weight_decay=0.0,
+        momentum=0.9,
+        nesterov=False,
+    )
+    assert np.all(sgd_parameter < 1.0)
+    assert np.all(sgd_momentum > 0.0)
     adagrad_parameter = np.ones(5, dtype=np.float32)
     adagrad_gradient = np.arange(1, 6, dtype=np.float32)
     adagrad_accumulator = np.zeros(5, dtype=np.float32)

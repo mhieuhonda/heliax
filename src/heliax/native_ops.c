@@ -52,6 +52,18 @@ void hx_softmax_lastdim(const float *x, float *out, size_t rows, size_t cols) {
     }
 }
 
+void hx_sgd(float *parameter, const float *gradient, float *momentum_buffer,
+            size_t n, float learning_rate, float weight_decay,
+            float momentum, int nesterov) {
+    #pragma omp parallel for if (n > 4096)
+    for (size_t i = 0; i < n; ++i) {
+        float update = gradient[i] + weight_decay * parameter[i];
+        momentum_buffer[i] = momentum * momentum_buffer[i] + update;
+        const float step = nesterov ? update + momentum * momentum_buffer[i] : momentum_buffer[i];
+        parameter[i] -= learning_rate * step;
+    }
+}
+
 void hx_adagrad(float *parameter, const float *gradient, float *accumulator,
                 size_t n, float learning_rate, float epsilon) {
     #pragma omp parallel for if (n > 4096)

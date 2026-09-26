@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.21 — 2026-09-25
+
+### Added
+
+- Native fused SGD update kernel with momentum and Nesterov support.
+- Native report now covers fifteen kernels.
+
 ## 0.6.20 — 2026-09-25
 
 ### Added

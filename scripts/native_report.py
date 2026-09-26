@@ -25,6 +25,12 @@ def _time(function, *, warmup: int = 2, repeats: int = 7) -> float:
     return float(np.median(samples))
 
 
+def _portable_sgd(parameter: np.ndarray, gradient: np.ndarray, momentum: np.ndarray) -> None:
+    momentum *= 0.9
+    momentum += gradient
+    parameter -= 0.001 * momentum
+
+
 def _portable_adagrad(parameter: np.ndarray, gradient: np.ndarray, accumulator: np.ndarray) -> None:
     accumulator += gradient * gradient
     parameter -= 0.001 * gradient / (np.sqrt(accumulator) + 1e-8)
@@ -59,6 +65,9 @@ def build_report(*, repeats: int = 7) -> dict[str, object]:
     target_values = generator.normal(size=(128, 16)).astype(np.float32)
     bce_logits = generator.normal(size=(128, 16)).astype(np.float32)
     bce_targets = generator.integers(0, 2, size=(128, 16)).astype(np.float32)
+    sgd_parameter = np.ones(4096, dtype=np.float32)
+    sgd_gradient = np.linspace(-1.0, 1.0, 4096, dtype=np.float32)
+    sgd_momentum = np.zeros(4096, dtype=np.float32)
     adagrad_parameter = np.ones(4096, dtype=np.float32)
     adagrad_gradient = np.linspace(-1.0, 1.0, 4096, dtype=np.float32)
     adagrad_accumulator = np.zeros(4096, dtype=np.float32)
@@ -66,6 +75,18 @@ def build_report(*, repeats: int = 7) -> dict[str, object]:
     rms_gradient = np.linspace(-1.0, 1.0, 4096, dtype=np.float32)
     rms_average = np.zeros(4096, dtype=np.float32)
     cases = {
+        "sgd": (
+            lambda: hx.native_ops.sgd(
+                sgd_parameter,
+                sgd_gradient,
+                sgd_momentum,
+                learning_rate=0.001,
+                weight_decay=0.0,
+                momentum=0.9,
+                nesterov=False,
+            ),
+            lambda: _portable_sgd(sgd_parameter, sgd_gradient, sgd_momentum),
+        ),
         "adagrad": (
             lambda: hx.native_ops.adagrad(
                 adagrad_parameter,

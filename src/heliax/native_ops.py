@@ -58,6 +58,16 @@ def _load() -> ctypes.CDLL | None:
             ctypes.c_size_t,
             ctypes.c_size_t,
         ]
+        library.hx_sgd.argtypes = [
+            ctypes.POINTER(ctypes.c_float),
+            ctypes.POINTER(ctypes.c_float),
+            ctypes.POINTER(ctypes.c_float),
+            ctypes.c_size_t,
+            ctypes.c_float,
+            ctypes.c_float,
+            ctypes.c_float,
+            ctypes.c_int,
+        ]
         library.hx_adagrad.argtypes = [
             ctypes.POINTER(ctypes.c_float),
             ctypes.POINTER(ctypes.c_float),
@@ -150,6 +160,7 @@ def _load() -> ctypes.CDLL | None:
             "hx_add_relu",
             "hx_gelu",
             "hx_softmax_lastdim",
+            "hx_sgd",
             "hx_adagrad",
             "hx_rmsprop",
             "hx_silu",
@@ -200,6 +211,7 @@ def native_info() -> dict[str, Any]:
         "kernels": [
             "add_relu",
             "gelu",
+            "sgd",
             "adagrad",
             "rmsprop",
             "silu",
@@ -238,6 +250,35 @@ def add_relu(left: np.ndarray, right: np.ndarray) -> np.ndarray:
         output.size,
     )
     return output
+
+
+def sgd(
+    parameter: np.ndarray,
+    gradient: np.ndarray,
+    momentum_buffer: np.ndarray,
+    *,
+    learning_rate: float,
+    weight_decay: float,
+    momentum: float,
+    nesterov: bool,
+) -> None:
+    library = _load()
+    if library is None:
+        raise RuntimeError(_LOAD_ERROR or "native backend unavailable")
+    arrays = [_float32_view(np.asarray(item)) for item in (parameter, gradient, momentum_buffer)]
+    if any(item.shape != arrays[0].shape for item in arrays):
+        raise ValueError("SGD operands must have identical shapes")
+    param, grad, buffer = arrays
+    library.hx_sgd(
+        param.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
+        grad.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
+        buffer.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
+        param.size,
+        ctypes.c_float(learning_rate),
+        ctypes.c_float(weight_decay),
+        ctypes.c_float(momentum),
+        ctypes.c_int(1 if nesterov else 0),
+    )
 
 
 def adagrad(

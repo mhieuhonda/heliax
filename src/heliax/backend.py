@@ -293,6 +293,25 @@ class NumpyBackend:
         momentum: float,
         nesterov: bool,
     ) -> np.ndarray | None:
+        if (
+            parameter.dtype == np.float32
+            and momentum_buffer is not None
+            and native_ops.native_enabled()
+            and native_ops.native_available()
+        ):
+            try:
+                native_ops.sgd(
+                    parameter,
+                    gradient,
+                    momentum_buffer,
+                    learning_rate=learning_rate,
+                    weight_decay=weight_decay,
+                    momentum=momentum,
+                    nesterov=nesterov,
+                )
+                return momentum_buffer
+            except RuntimeError:
+                pass
         update = gradient + weight_decay * parameter
         if momentum_buffer is None:
             momentum_buffer = np.zeros_like(parameter, dtype=DEFAULT_DTYPE)
