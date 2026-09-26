@@ -116,6 +116,8 @@ class Module:
     def dtype(self, dtype: Any) -> Module:
         for parameter in self.parameters():
             parameter.data = parameter.numpy().astype(dtype, copy=False)
+        for _, buffer in self.named_buffers():
+            buffer[...] = buffer.astype(dtype, copy=False)
         return self
 
     def __repr__(self) -> str:

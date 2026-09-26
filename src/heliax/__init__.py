@@ -4,6 +4,7 @@ from . import (
     autograd,
     backend,
     data,
+    distributed,
     functional,
     initialization,
     native_ops,
@@ -17,6 +18,7 @@ from . import (
 from .autograd import gradcheck
 from .backend import available_backends, backend_info, get_backend, set_backend
 from .data import DataLoader, TensorDataset, fit, seed_everything
+from .distributed import DistributedSampler, reduce_gradients
 from .functional import (
     add_relu,
     binary_cross_entropy,
@@ -140,6 +142,7 @@ __all__ = [
     "Conv2d",
     "CosineAnnealingLR",
     "DataLoader",
+    "DistributedSampler",
     "Dropout",
     "Embedding",
     "ExponentialLR",
@@ -188,6 +191,7 @@ __all__ = [
     "data",
     "dequantize",
     "dequantize_state_dict",
+    "distributed",
     "dropout",
     "embedding",
     "enable_grad",
@@ -231,6 +235,7 @@ __all__ = [
     "quantize",
     "quantize_state_dict",
     "randn",
+    "reduce_gradients",
     "reload_native",
     "relu",
     "save_checkpoint",

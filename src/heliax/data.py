@@ -43,28 +43,35 @@ class DataLoader:
     shuffle: bool = False
     drop_last: bool = False
     generator: np.random.Generator | None = None
+    sampler: Iterable[int] | None = None
 
     def __post_init__(self) -> None:
         if self.batch_size <= 0:
             raise ValueError("batch_size must be positive")
         if not isinstance(self.dataset, TensorDataset):
             raise TypeError("DataLoader currently expects a TensorDataset")
+        if self.sampler is not None and self.shuffle:
+            raise ValueError("DataLoader cannot combine an explicit sampler with shuffle=True")
 
     def __iter__(self) -> Iterator[tuple[Tensor, ...]]:
-        length = len(self.dataset)
-        indices = np.arange(length)
-        if self.shuffle:
-            generator = self.generator or np.random.default_rng()
-            generator.shuffle(indices)
+        if self.sampler is not None:
+            indices = np.asarray(list(self.sampler), dtype=np.int64)
+        else:
+            indices = np.arange(len(self.dataset))
+            if self.shuffle:
+                generator = self.generator or np.random.default_rng()
+                generator.shuffle(indices)
+        length = len(indices)
         limit = length - (length % self.batch_size) if self.drop_last else length
         for start in range(0, limit, self.batch_size):
             selected = indices[start : start + self.batch_size]
             yield tuple(Tensor(item.numpy()[selected]) for item in self.dataset.tensors)
 
     def __len__(self) -> int:
+        length = len(self.sampler) if self.sampler is not None else len(self.dataset)
         if self.drop_last:
-            return len(self.dataset) // self.batch_size
-        return (len(self.dataset) + self.batch_size - 1) // self.batch_size
+            return length // self.batch_size
+        return (length + self.batch_size - 1) // self.batch_size
 
 
 def fit(
