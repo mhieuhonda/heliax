@@ -39,8 +39,8 @@ def save_checkpoint(
     if optimizer is not None:
         for index, values in optimizer.state.items():
             for key, value in values.items():
-                if isinstance(value, np.ndarray):
-                    state[f"optimizer.{index}.{key}"] = value
+                if isinstance(value, (np.ndarray, np.generic, int, float, bool)):
+                    state[f"optimizer.{index}.{key}"] = np.asarray(value)
         state["optimizer.defaults.n"] = np.asarray(len(optimizer.parameters), dtype=np.int64)
     for key, value in (metadata or {}).items():
         if isinstance(value, (str, int, float, bool)):
@@ -66,9 +66,13 @@ def load_checkpoint(
                 value.item() if np.asarray(value).ndim == 0 else value
             )
     if optimizer is not None:
-        for index, values in optimizer.state.items():
-            for key in list(values):
-                key_name = f"optimizer.{index}.{key}"
-                if key_name in archive:
-                    values[key] = archive[key_name]
+        for key, value in archive.items():
+            if not key.startswith("optimizer.") or key == "optimizer.defaults.n":
+                continue
+            _, index_text, state_name = key.split(".", 2)
+            try:
+                index = int(index_text)
+            except ValueError:
+                continue
+            optimizer.state.setdefault(index, {})[state_name] = value
     return metadata
