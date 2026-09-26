@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.9 — 2026-09-25
+
+### Added
+
+- Dilation support through GroupedConv2d.
+- Validated Torch compatibility notes and composable ModuleList forward execution.
+- Additional convolution and observability regression coverage.
+
 ## 0.3.8 — 2026-09-25
 
 ### Added
