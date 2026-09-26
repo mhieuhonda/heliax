@@ -756,7 +756,9 @@ class MultiheadAttention(Module):
         )
         self.out_proj_bias = Parameter(np.zeros(self.embed_dim, dtype=dtype)) if bias else None
 
-    def forward(self, value: Tensor, mask: Tensor | None = None) -> Tensor:
+    def forward(
+        self, value: Tensor, mask: Tensor | None = None, return_attention: bool = False
+    ) -> Tensor | tuple[Tensor, Tensor]:
         if value.ndim != 3 or value.shape[-1] != self.embed_dim:
             raise ValueError(
                 f"MultiheadAttention expected N x L x {self.embed_dim}, got {value.shape}"
@@ -778,7 +780,7 @@ class MultiheadAttention(Module):
         output = context @ self.out_proj_weight.transpose((1, 0))
         if self.out_proj_bias is not None:
             output = output + self.out_proj_bias
-        return output
+        return (output, weights) if return_attention else output
 
 
 class TransformerEncoderLayer(Module):

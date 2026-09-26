@@ -136,7 +136,7 @@ from .tensor import (
 )
 from .torch_interop import TorchAccelerator, from_torch, to_torch, torch_available, torch_version
 
-__version__ = "0.3.7"
+__version__ = "0.3.8"
 
 __all__ = [
     "GELU",

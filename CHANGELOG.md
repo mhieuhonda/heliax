@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.8 — 2026-09-25
+
+### Added
+
+- MultiheadAttention can return attention weights for interpretability.
+- Scheduled/manual PyTorch compatibility CI and native artifact builds.
+- Causal mask and memory-aware checkpointing documentation.
+
 ## 0.3.7 — 2026-09-25
 
 ### Added
