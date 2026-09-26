@@ -67,6 +67,12 @@ def test_native_kernels_match_numpy_reference():
     )
     assert np.all(parameter < 1.0)
     assert np.all(first > 0.0) and np.all(second > 0.0)
+    mae_prediction = rng.normal(size=(4, 5)).astype(np.float32)
+    mae_target = rng.normal(size=(4, 5)).astype(np.float32)
+    mae_loss, mae_gradient = hx.native_ops.mae(mae_prediction, mae_target)
+    mae_difference = mae_prediction - mae_target
+    assert np.allclose(mae_loss, float(np.abs(mae_difference).mean()), atol=1e-5)
+    assert np.allclose(mae_gradient, np.sign(mae_difference) / 20, atol=1e-5)
     bce_logits = rng.normal(size=(4, 5)).astype(np.float32)
     bce_targets = rng.integers(0, 2, size=(4, 5)).astype(np.float32)
     bce_loss, bce_gradient = hx.native_ops.bce_with_logits(bce_logits, bce_targets)

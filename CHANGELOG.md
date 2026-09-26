@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.11 — 2026-09-25
+
+### Added
+
+- Native fused MAE kernel with broadcast-aware targets and sign gradients.
+- Native report now covers eleven kernels.
+
 ## 0.6.10 — 2026-09-25
 
 ### Fixed
