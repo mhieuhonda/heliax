@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.0 — 2026-09-25
+
+### Added
+
+- Repeatable autotuning helpers for benchmark-gated backend selection.
+- Native artifact workflow for Linux/macOS shared libraries.
+- Scheduled/manual PyTorch compatibility workflow and validated interop notes.
+- Attention weight introspection and composable ModuleList execution.
+
 ## 0.3.9 — 2026-09-25
 
 ### Added

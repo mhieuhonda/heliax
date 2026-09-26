@@ -2,6 +2,7 @@
 
 from . import (
     autograd,
+    autotune,
     backend,
     data,
     distributed,
@@ -17,6 +18,7 @@ from . import (
     torch_interop,
 )
 from .autograd import checkpoint, gradcheck
+from .autotune import autotune_report, select_fastest, time_callable
 from .backend import available_backends, backend_info, get_backend, set_backend
 from .data import DataLoader, PrefetchLoader, TensorDataset, fit, seed_everything
 from .distributed import DistributedSampler, reduce_gradients
@@ -136,7 +138,7 @@ from .tensor import (
 )
 from .torch_interop import TorchAccelerator, from_torch, to_torch, torch_available, torch_version
 
-__version__ = "0.3.9"
+__version__ = "0.4.0"
 
 __all__ = [
     "GELU",
@@ -196,6 +198,8 @@ __all__ = [
     "arange",
     "autocast",
     "autograd",
+    "autotune",
+    "autotune_report",
     "available_backends",
     "backend",
     "backend_info",
@@ -267,6 +271,7 @@ __all__ = [
     "save_state_dict",
     "scaled_dot_product_attention",
     "seed_everything",
+    "select_fastest",
     "serialization",
     "set_backend",
     "sigmoid",
@@ -275,6 +280,7 @@ __all__ = [
     "stack",
     "tanh",
     "tensor",
+    "time_callable",
     "to_torch",
     "torch_available",
     "torch_interop",
