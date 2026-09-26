@@ -130,6 +130,7 @@ from .quantization import (
     dequantize,
     dequantize_state_dict,
     quantize,
+    quantize_module,
     quantize_state_dict,
 )
 from .serialization import load_checkpoint, load_state_dict, save_checkpoint, save_state_dict
@@ -155,7 +156,7 @@ from .training import CheckpointManager, Trainer
 from .workspace import Workspace
 from .workspace import workspace as workspace_context
 
-__version__ = "0.6.33"
+__version__ = "0.6.34"
 
 __all__ = [
     "GELU",
@@ -293,6 +294,7 @@ __all__ = [
     "profiler",
     "quantization",
     "quantize",
+    "quantize_module",
     "quantize_state_dict",
     "randn",
     "reduce_gradients",

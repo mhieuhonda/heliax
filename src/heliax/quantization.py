@@ -144,6 +144,37 @@ class QuantizedLinear(Module):
         return output
 
 
+def quantize_module(module: Module, *, bits: int = 8) -> Module:
+    """Recursively replace Linear/Embedding children with quantized modules."""
+
+    from . import nn
+
+    for name, child in list(module.__dict__.items()):
+        if isinstance(child, nn.Linear):
+            setattr(module, name, QuantizedLinear.from_linear(child, bits=bits))
+        elif isinstance(child, nn.Embedding):
+            setattr(module, name, QuantizedEmbedding.from_embedding(child, bits=bits))
+        elif isinstance(child, Module):
+            quantize_module(child, bits=bits)
+        elif isinstance(child, (list, tuple)):
+            for index, item in enumerate(child):
+                if isinstance(item, nn.Linear):
+                    child[index] = QuantizedLinear.from_linear(item, bits=bits)
+                elif isinstance(item, nn.Embedding):
+                    child[index] = QuantizedEmbedding.from_embedding(item, bits=bits)
+                elif isinstance(item, Module):
+                    quantize_module(item, bits=bits)
+        elif isinstance(child, dict):
+            for key, item in list(child.items()):
+                if isinstance(item, nn.Linear):
+                    child[key] = QuantizedLinear.from_linear(item, bits=bits)
+                elif isinstance(item, nn.Embedding):
+                    child[key] = QuantizedEmbedding.from_embedding(item, bits=bits)
+                elif isinstance(item, Module):
+                    quantize_module(item, bits=bits)
+    return module
+
+
 def quantize(
     value: Tensor | np.ndarray, *, bits: int = 8, symmetric: bool = True
 ) -> QuantizedTensor:

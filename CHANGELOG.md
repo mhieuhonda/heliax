@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.34 — 2026-09-25
+
+### Added
+
+- Recursive `quantize_module` conversion for Linear/Embedding children inside module containers.
+- Regression coverage for quantized Sequential models.
+
 ## 0.6.33 — 2026-09-25
 
 ### Added
