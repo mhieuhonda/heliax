@@ -10,7 +10,14 @@ def test_expand_repeat_roll_squeeze_gradients():
     rolled = value.roll(1, axis=1)
     squeezed = hx.tensor([[[1.0, 2.0]]], requires_grad=True).squeeze(0)
     unsqueezed = squeezed.unsqueeze(0)
-    result = expanded.sum() + repeated.sum() + rolled.sum() + squeezed.sum() + unsqueezed.sum()
+    result = (
+        expanded.sum()
+        + repeated.sum()
+        + rolled.sum()
+        + squeezed.sum()
+        + unsqueezed.sum()
+        + value.repeat(2).sum()
+    )
     result.backward()
     assert value.grad is not None
     assert squeezed.grad is not None

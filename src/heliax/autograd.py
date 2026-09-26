@@ -70,7 +70,9 @@ def gradcheck(
 def checkpoint(function: Callable[..., Tensor], *args: Tensor, **kwargs: Any) -> Tensor:
     """Trade compute for memory by recomputing a function during backward."""
 
-    requires_grad = any(isinstance(value, Tensor) and value.requires_grad for value in args)
+    requires_grad = any(
+        isinstance(value, Tensor) and value.requires_grad for value in (*args, *kwargs.values())
+    )
     with no_grad():
         forward = function(*args, **kwargs)
     if not isinstance(forward, Tensor):

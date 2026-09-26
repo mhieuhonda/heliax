@@ -1,5 +1,7 @@
 # Heliax
 
+[![Heliax CI](https://github.com/mhieuhonda/heliax/actions/workflows/ci.yml/badge.svg)](https://github.com/mhieuhonda/heliax/actions/workflows/ci.yml)
+
 > **A performance-first tensor, autodiff, and neural network library for Python.**
 
 Heliax is a new, original Python deep-learning library built around a simple promise: keep the numerical work close to NumPy/BLAS, make the graph explicit, and leave room for a native compiler later.

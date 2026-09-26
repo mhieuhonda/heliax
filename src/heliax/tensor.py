@@ -606,12 +606,18 @@ class Tensor:
             def run_backward() -> None:
                 grad = output.grad.numpy()
                 if axis is None:
-                    _accumulate(
-                        self,
-                        grad.reshape(self.shape).sum(axis=tuple(range(self.ndim - 1, -1, -1)))
-                        if self.ndim
-                        else grad,
-                    )
+                    if isinstance(repeats, int):
+                        repeated = np.zeros_like(self._data, dtype=grad.dtype)
+                        for index in range(self.size):
+                            repeated.flat[index] = grad.flat[
+                                index * repeats : (index + 1) * repeats
+                            ].sum()
+                        _accumulate(self, repeated)
+                    else:
+                        _accumulate(
+                            self,
+                            grad.reshape(self.shape).sum(axis=tuple(range(self.ndim - 1, -1, -1))),
+                        )
                 else:
                     normalized_axis = axis if axis >= 0 else axis + self.ndim
                     _accumulate(
