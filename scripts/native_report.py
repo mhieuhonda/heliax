@@ -71,6 +71,10 @@ def build_report(*, repeats: int = 7) -> dict[str, object]:
             lambda: hx.native_ops.add_relu(left, right),
             lambda: np.maximum(left + right, 0.0),
         ),
+        "silu": (
+            lambda: hx.native_ops.silu(left),
+            lambda: hx.functional.silu(hx.tensor(left)).numpy(),
+        ),
         "gelu": (
             lambda: hx.native_ops.gelu(left),
             lambda: hx.functional.gelu(hx.tensor(left)).numpy(),

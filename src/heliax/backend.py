@@ -151,6 +151,15 @@ class NumpyBackend:
         return 0.5 * value * (1.0 + np.tanh(coefficient * (value + 0.044715 * cubic)))
 
     def silu(self, value: np.ndarray) -> np.ndarray:
+        if (
+            value.dtype == np.float32
+            and native_ops.native_enabled()
+            and native_ops.native_available()
+        ):
+            try:
+                return native_ops.silu(value)
+            except RuntimeError:
+                pass
         return value * self.sigmoid(value)
 
     def softmax(self, value: np.ndarray, axis: int = -1) -> np.ndarray:

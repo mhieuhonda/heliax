@@ -26,6 +26,7 @@ def test_native_kernels_match_numpy_reference():
     left = rng.normal(size=(5, 7)).astype(np.float32)
     right = rng.normal(size=(5, 7)).astype(np.float32)
     assert np.allclose(hx.native_ops.gelu(array), numpy_gelu(array), atol=1e-6)
+    assert np.allclose(hx.native_ops.silu(array), array / (1.0 + np.exp(-array)), atol=1e-6)
     shifted = array - np.max(array, axis=-1, keepdims=True)
     reference_softmax = np.exp(shifted) / np.sum(np.exp(shifted), axis=-1, keepdims=True)
     assert np.allclose(hx.native_ops.softmax_lastdim(array), reference_softmax, atol=1e-6)

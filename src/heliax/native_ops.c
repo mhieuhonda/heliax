@@ -52,6 +52,13 @@ void hx_softmax_lastdim(const float *x, float *out, size_t rows, size_t cols) {
     }
 }
 
+void hx_silu(const float *x, float *out, size_t n) {
+    #pragma omp parallel for if (n > 4096)
+    for (size_t i = 0; i < n; ++i) {
+        out[i] = x[i] / (1.0f + expf(-x[i]));
+    }
+}
+
 void hx_mae(const float *prediction, const float *target, float *loss,
             float *gradient, size_t n) {
     float total = 0.0f;

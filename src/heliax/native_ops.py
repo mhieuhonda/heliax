@@ -58,6 +58,11 @@ def _load() -> ctypes.CDLL | None:
             ctypes.c_size_t,
             ctypes.c_size_t,
         ]
+        library.hx_silu.argtypes = [
+            ctypes.POINTER(ctypes.c_float),
+            ctypes.POINTER(ctypes.c_float),
+            ctypes.c_size_t,
+        ]
         library.hx_mae.argtypes = [
             ctypes.POINTER(ctypes.c_float),
             ctypes.POINTER(ctypes.c_float),
@@ -128,6 +133,7 @@ def _load() -> ctypes.CDLL | None:
             "hx_add_relu",
             "hx_gelu",
             "hx_softmax_lastdim",
+            "hx_silu",
             "hx_mae",
             "hx_bce_with_logits",
             "hx_huber",
@@ -175,6 +181,7 @@ def native_info() -> dict[str, Any]:
         "kernels": [
             "add_relu",
             "gelu",
+            "silu",
             "mae",
             "bce_with_logits",
             "huber",
@@ -208,6 +215,20 @@ def add_relu(left: np.ndarray, right: np.ndarray) -> np.ndarray:
         right_array.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
         output.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
         output.size,
+    )
+    return output
+
+
+def silu(value: np.ndarray) -> np.ndarray:
+    library = _load()
+    if library is None:
+        raise RuntimeError(_LOAD_ERROR or "native backend unavailable")
+    array = _float32_view(np.asarray(value))
+    output = np.empty_like(array)
+    library.hx_silu(
+        array.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
+        output.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
+        array.size,
     )
     return output
 

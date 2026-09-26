@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.13 — 2026-09-25
+
+### Added
+
+- Native SiLU activation kernel and backend dispatch.
+- Native report now covers twelve kernels.
+
 ## 0.6.12 — 2026-09-25
 
 ### Fixed
