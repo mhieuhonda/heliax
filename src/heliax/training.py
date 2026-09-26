@@ -98,6 +98,7 @@ class Trainer:
         gradient_accumulation_steps: int = 1,
         grad_clip: float | None = None,
         scheduler: Any = None,
+        grad_scaler: Any = None,
         max_steps: int | None = None,
     ) -> None:
         if epochs <= 0 or gradient_accumulation_steps <= 0:
@@ -111,6 +112,7 @@ class Trainer:
         self.gradient_accumulation_steps = int(gradient_accumulation_steps)
         self.grad_clip = grad_clip
         self.scheduler = scheduler
+        self.grad_scaler = grad_scaler
         self.max_steps = max_steps
         self.epoch = 0
         self.global_step = 0
@@ -118,9 +120,14 @@ class Trainer:
 
     def _apply_step(self, loss: Tensor) -> None:
         parameters = self.model.parameters()
+        if self.grad_scaler is not None:
+            self.grad_scaler.unscale_gradients(parameters)
         if self.grad_clip is not None:
             clip_grad_norm_(parameters, self.grad_clip)
-        self.optimizer.step()
+        if self.grad_scaler is not None:
+            self.grad_scaler.step(self.optimizer, parameters)
+        else:
+            self.optimizer.step()
         if self.scheduler is not None:
             step_scheduler(self.scheduler, float(loss.item()))
         self.global_step += 1
@@ -136,7 +143,10 @@ class Trainer:
                 continue
             inputs, targets = batch[0], batch[1]
             loss = self.loss_fn(self.model(inputs), targets)
-            (loss / self.gradient_accumulation_steps).backward()
+            backward_loss = (
+                self.grad_scaler.scale_loss(loss) if self.grad_scaler is not None else loss
+            )
+            (backward_loss / self.gradient_accumulation_steps).backward()
             total += float(loss.item()) * (inputs.shape[0] if inputs.shape else 1)
             examples += inputs.shape[0] if inputs.shape else 1
             pending += 1

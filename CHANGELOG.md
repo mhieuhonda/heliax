@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.29 — 2026-09-25
+
+### Added
+
+- Integrated `GradScaler` into `Trainer` and the compact `fit` loop.
+- Regression coverage for scaled training steps.
+
 ## 0.6.28 — 2026-09-25
 
 ### Fixed

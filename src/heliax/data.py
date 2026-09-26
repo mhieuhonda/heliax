@@ -122,6 +122,7 @@ def fit(
     gradient_accumulation_steps: int = 1,
     scheduler: Any = None,
     max_steps: int | None = None,
+    grad_scaler: Any = None,
     on_epoch_end: Any = None,
 ) -> list[float]:
     """Run a compact training loop for a model exposing ``__call__``.
@@ -152,15 +153,21 @@ def fit(
             inputs, targets = batch[0], batch[1]
             predictions = model(inputs)
             loss = loss_fn(predictions, targets)
-            (loss / gradient_accumulation_steps).backward()
+            backward_loss = grad_scaler.scale_loss(loss) if grad_scaler is not None else loss
+            (backward_loss / gradient_accumulation_steps).backward()
             pending_batches += 1
             batch_size = inputs.shape[0] if inputs.shape else 1
             total_loss += float(loss.item()) * batch_size
             examples += batch_size
             if pending_batches == gradient_accumulation_steps:
+                if grad_scaler is not None:
+                    grad_scaler.unscale_gradients(parameters)
                 if grad_clip is not None:
                     clip_grad_norm_(parameters, grad_clip)
-                optimizer.step()
+                if grad_scaler is not None:
+                    grad_scaler.step(optimizer, parameters)
+                else:
+                    optimizer.step()
                 optimizer.zero_grad()
                 pending_batches = 0
                 global_steps += 1
@@ -170,9 +177,14 @@ def fit(
                     stop = True
                     break
         if pending_batches and not stop:
+            if grad_scaler is not None:
+                grad_scaler.unscale_gradients(parameters)
             if grad_clip is not None:
                 clip_grad_norm_(parameters, grad_clip)
-            optimizer.step()
+            if grad_scaler is not None:
+                grad_scaler.step(optimizer, parameters)
+            else:
+                optimizer.step()
             if scheduler is not None:
                 step_scheduler(scheduler, float(loss.item()))
             global_steps += 1

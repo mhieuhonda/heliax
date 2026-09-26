@@ -22,3 +22,9 @@ def test_trainer_fit_evaluate_and_state_round_trip(tmp_path):
     trainer.save(str(tmp_path / "trainer.npz"))
     trainer.load(str(tmp_path / "trainer.npz"))
     assert trainer.global_step == state["global_step"]
+    scaler = hx.GradScaler(initial_scale=2.0)
+    scaled_trainer = hx.Trainer(
+        model, optimizer, hx.mean_squared_error, epochs=1, grad_scaler=scaler
+    )
+    scaled_trainer.fit(loader)
+    assert scaler.scale == 2.0
