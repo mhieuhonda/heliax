@@ -35,3 +35,10 @@ def test_buffer_round_trip_in_checkpoint(tmp_path):
     assert metadata["kind"] == "buffer-test"
     for key, expected in model.state_dict().items():
         assert np.allclose(restored.state_dict()[key], expected), key
+
+
+def test_non_strict_state_dict_loading():
+    model = hx.nn.Sequential(hx.nn.Linear(2, 2, rng=np.random.default_rng(1)), hx.nn.ReLU())
+    state = {"layers.0.bias": np.ones(2, dtype=np.float32)}
+    model.load_state_dict(state, strict=False)
+    assert np.allclose(model.state_dict()["layers.0.bias"], 1.0)

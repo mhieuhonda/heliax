@@ -81,20 +81,22 @@ class Module:
         state.update({name: value.copy() for name, value in self.named_buffers()})
         return state
 
-    def load_state_dict(self, state: dict[str, Any]) -> None:
+    def load_state_dict(self, state: dict[str, Any], *, strict: bool = True) -> None:
         expected = set(self.state_dict())
         received = set(state)
         missing = expected - received
         unexpected = received - expected
-        if missing or unexpected:
+        if strict and (missing or unexpected):
             raise ValueError(
                 f"state_dict mismatch; missing={sorted(missing)}, unexpected={sorted(unexpected)}"
             )
         for name, parameter in self.named_parameters():
-            parameter.data = np.asarray(state[name])
-        for name, value in self.named_buffers():
-            target = dict(self.named_buffers())[name]
-            target[...] = np.asarray(state[name])
+            if name in state:
+                parameter.data = np.asarray(state[name])
+        buffers = dict(self.named_buffers())
+        for name, target in buffers.items():
+            if name in state:
+                target[...] = np.asarray(state[name])
 
     def train(self, mode: bool = True) -> Module:
         self.training = mode

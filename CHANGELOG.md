@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.8 — 2026-09-25
+
+### Added
+
+- Non-strict `Module.load_state_dict` for checkpoint migration workflows.
+- Roadmap refresh for the 0.5 baseline and v0.6 layout/tooling plans.
+
 ## 0.5.7 — 2026-09-25
 
 ### Added

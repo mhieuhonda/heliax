@@ -39,6 +39,21 @@
 - Better mixed-precision scaffolding and dtype policies
 - Native backend packaging and per-platform artifact matrix
 
+## v0.5.7 — stable 0.5 baseline
+
+- Native fused cross entropy on every class axis
+- Complete einsum reductions and gradients
+- Atomic checkpoints and gradient/training memory accounting
+- High-level Trainer, Torch backend/device selection, quantization, EMA, and precision policies
+
+## v0.6 — layout and tooling
+
+- Strided/contiguous layout policies and reusable workspace buffers
+- More fused forward/backward kernels with benchmark gates
+- Non-strict checkpoint migration and richer metadata
+- Better mixed-precision scaffolding and dtype policies
+- Native backend packaging and per-platform artifact matrix
+
 ## v1.0 — ecosystem depth
 
 - Convolution and attention building blocks
