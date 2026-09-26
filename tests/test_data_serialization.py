@@ -31,7 +31,14 @@ def test_state_dict_round_trip(tmp_path):
     assert metadata["epoch"] == 3
 
 
-def test_profiler():
+def test_state_dict_preserves_non_npz_suffix(tmp_path):
+    path = hx.save_state_dict(tmp_path / "weights.ckpt", {"value": np.arange(3)})
+    assert path.name == "weights.ckpt"
+    assert path.is_file()
+    assert not (tmp_path / "weights.ckpt.npz").exists()
+    loaded = hx.load_state_dict(path)
+    assert np.array_equal(loaded["value"], np.arange(3))
+
     results = []
     with hx.profile("work", results):
         _ = hx.tensor([1.0, 2.0]).sum()

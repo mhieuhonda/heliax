@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.3 — 2026-09-25
+
+### Fixed
+
+- State-dict and checkpoint writes are atomic and preserve non-`.npz` path suffixes.
+- Added serialization regression coverage for crash-safe writes and path handling.
+
 ## 0.5.2 — 2026-09-25
 
 ### Added

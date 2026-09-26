@@ -14,9 +14,18 @@ FORMAT_VERSION = 1
 
 
 def save_state_dict(path: str | Path, state: dict[str, np.ndarray]) -> Path:
+    """Write an NPZ state dict atomically without changing the caller's path."""
+
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
-    np.savez(target, **state)
+    temporary = target.with_name(f".{target.name}.tmp")
+    try:
+        with temporary.open("wb") as handle:
+            np.savez(handle, **state)
+        temporary.replace(target)
+    finally:
+        if temporary.exists():
+            temporary.unlink()
     return target
 
 
