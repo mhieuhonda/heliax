@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.2 — 2026-09-25
+
+### Fixed
+
+- Checkpoint keyword-tensor detection and repeat axis=None gradient reduction.
+- Updated CI badge and Torch backend documentation.
+
 ## 0.4.1 — 2026-09-25
 
 ### Added

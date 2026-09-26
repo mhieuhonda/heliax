@@ -140,7 +140,7 @@ from .tensor import (
 from .torch_backend import TorchBackend, get_torch_backend, torch_backend_available
 from .torch_interop import TorchAccelerator, from_torch, to_torch, torch_available, torch_version
 
-__version__ = "0.4.1"
+__version__ = "0.4.2"
 
 __all__ = [
     "GELU",
