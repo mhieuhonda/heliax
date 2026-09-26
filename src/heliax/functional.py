@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from itertools import product
 from typing import Any
 
 import numpy as np
@@ -621,6 +622,40 @@ def cosine_similarity(left: Tensor, right: Tensor, axis: int = -1, eps: float = 
     return output
 
 
+def _single_einsum_repeated_gradient(
+    gradient: np.ndarray, input_equation: str, output_equation: str, data: np.ndarray
+) -> np.ndarray:
+    """Reference backward for contractions with repeated input labels."""
+
+    axis_labels = input_equation
+    reduced_labels = [label for label in dict.fromkeys(axis_labels) if label not in output_equation]
+    reduced_sizes = [data.shape[axis_labels.index(label)] for label in reduced_labels]
+    result = np.zeros_like(data, dtype=gradient.dtype)
+    for index in np.ndindex(*data.shape):
+        values = {label: index[axis] for axis, label in enumerate(axis_labels)}
+        if any(
+            len({index[axis] for axis, other in enumerate(axis_labels) if other == label}) > 1
+            for label in values
+        ):
+            continue
+        for reduced_values in product(*(range(size) for size in reduced_sizes)):
+            candidate = list(index)
+            for label, value in zip(reduced_labels, reduced_values):
+                for axis, axis_label in enumerate(axis_labels):
+                    if axis_label == label:
+                        candidate[axis] = value
+            candidate_values = {label: candidate[axis] for axis, label in enumerate(axis_labels)}
+            if any(
+                len({candidate[axis] for axis, other in enumerate(axis_labels) if other == label})
+                > 1
+                for label in candidate_values
+            ):
+                continue
+            output_index = tuple(candidate_values[label] for label in output_equation)
+            result[index] += gradient[output_index]
+    return result
+
+
 def einsum(equation: str, left: Tensor, right: Tensor | None = None) -> Tensor:
     """One- or two-operand einsum with explicit output and autograd."""
 
@@ -668,15 +703,12 @@ def einsum(equation: str, left: Tensor, right: Tensor | None = None) -> Tensor:
                     for position in reversed(reduced_positions):
                         kept_gradient = np.expand_dims(kept_gradient, axis=position)
                     _accumulate(left, kept_gradient)
-                elif not output_equation and left.ndim == 1:
-                    _accumulate(left, np.broadcast_to(grad, left.shape).copy())
-                elif not output_equation:
-                    diagonal = np.zeros_like(left.numpy())
-                    diagonal.reshape(-1)[:: left.ndim + 1] = np.asarray(grad)
-                    _accumulate(left, diagonal)
                 else:
-                    raise NotImplementedError(
-                        "single-operand einsum with repeated labels is limited to trace/permutation"
+                    _accumulate(
+                        left,
+                        _single_einsum_repeated_gradient(
+                            grad, left_equation, output_equation, left.numpy()
+                        ),
                     )
 
             output._backward = run_backward

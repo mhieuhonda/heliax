@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0 — 2026-09-25
+
+### Added
+
+- Repeated-label single-operand einsum contractions and gradients.
+- Complete axis-generic cross entropy coverage.
+- Trainer, autograd buffer reuse, native kernels, Torch backend, quantization, EMA, and precision tooling retained as the stable 0.5 baseline.
+
 ## 0.4.9 — 2026-09-25
 
 ### Fixed

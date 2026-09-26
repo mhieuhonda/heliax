@@ -23,6 +23,14 @@ def test_einsum_trace_and_transpose():
     assert np.allclose(hx.einsum("ii->", value).numpy(), np.trace(value.numpy()), atol=1e-6)
     assert np.allclose(hx.einsum("ij->i", value).numpy(), value.numpy().sum(axis=1), atol=1e-6)
     assert np.allclose(hx.einsum("ij->", value).numpy(), value.numpy().sum(), atol=1e-6)
+    assert np.allclose(hx.einsum("ii->i", value).numpy(), np.diag(value.numpy()), atol=1e-6)
+    repeated = hx.tensor(np.arange(12, dtype=np.float32).reshape(2, 2, 3), requires_grad=True)
+    assert np.allclose(
+        hx.einsum("iij->ij", repeated).numpy(),
+        np.stack([repeated.numpy()[0, 0, :], repeated.numpy()[1, 1, :]]),
+    )
+    hx.einsum("iij->ij", repeated).sum().backward()
+    assert repeated.grad is not None
     assert np.allclose(hx.einsum("ij->ji", value).numpy(), value.numpy().T, atol=1e-6)
     hx.einsum("ij->ji", value).sum().backward()
     assert value.grad is not None
