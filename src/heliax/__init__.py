@@ -97,6 +97,7 @@ from .optim import (
     Adam,
     AdamW,
     CosineAnnealingLR,
+    CosineAnnealingWarmRestarts,
     ExponentialLR,
     ModelEMA,
     RMSProp,
@@ -149,7 +150,7 @@ from .training import Trainer
 from .workspace import Workspace
 from .workspace import workspace as workspace_context
 
-__version__ = "0.6.14"
+__version__ = "0.6.15"
 
 __all__ = [
     "GELU",
@@ -165,6 +166,7 @@ __all__ = [
     "BatchNorm2d",
     "Conv2d",
     "CosineAnnealingLR",
+    "CosineAnnealingWarmRestarts",
     "CrossEntropyLoss",
     "DataLoader",
     "DistributedSampler",

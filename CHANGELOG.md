@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.15 — 2026-09-25
+
+### Added
+
+- `CosineAnnealingWarmRestarts` scheduler with optional warmup and cycle decay.
+- Regression coverage for the warm-restart learning-rate schedule.
+
 ## 0.6.14 — 2026-09-25
 
 ### Added

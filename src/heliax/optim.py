@@ -391,3 +391,34 @@ class CosineAnnealingLR(LRScheduler):
         progress = min(1.0, max(0.0, self.last_epoch / self.t_max))
         cosine = 0.5 * (1.0 + math.cos(math.pi * progress))
         return self.eta_min + (self.base_lrs[0] - self.eta_min) * cosine
+
+
+class CosineAnnealingWarmRestarts(LRScheduler):
+    def __init__(
+        self,
+        optimizer: Optimizer,
+        first_cycle_steps: int,
+        *,
+        min_lr: float = 0.0,
+        factor: float = 0.5,
+        warmup_steps: int = 0,
+        last_epoch: int = -1,
+    ) -> None:
+        super().__init__(optimizer, last_epoch)
+        if first_cycle_steps <= 0 or min_lr < 0 or factor <= 0 or warmup_steps < 0:
+            raise ValueError("invalid warm-restart scheduler hyperparameters")
+        self.first_cycle_steps = int(first_cycle_steps)
+        self.min_lr = float(min_lr)
+        self.factor = float(factor)
+        self.warmup_steps = int(warmup_steps)
+
+    def _compute_lr(self) -> float:
+        if self.warmup_steps and self.last_epoch < self.warmup_steps:
+            progress = self.last_epoch / max(self.warmup_steps, 1)
+            return self.min_lr + (self.base_lrs[0] - self.min_lr) * progress
+        cycle = (self.last_epoch - self.warmup_steps) // self.first_cycle_steps
+        cycle_max = self.base_lrs[0] * (self.factor**cycle)
+        position = (self.last_epoch - self.warmup_steps) % self.first_cycle_steps
+        progress = position / self.first_cycle_steps
+        cosine = 0.5 * (1.0 + math.cos(math.pi * progress))
+        return self.min_lr + (cycle_max - self.min_lr) * cosine
