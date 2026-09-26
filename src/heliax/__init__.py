@@ -5,6 +5,7 @@ from . import (
     backend,
     data,
     functional,
+    initialization,
     native_ops,
     nn,
     optim,
@@ -27,6 +28,7 @@ from .functional import (
     fused_linear_bias,
     fused_linear_gelu,
     gelu,
+    huber_loss,
     log_softmax,
     masked_softmax,
     mean_absolute_error,
@@ -40,6 +42,7 @@ from .functional import (
     tanh,
     where,
 )
+from .initialization import kaiming_uniform_, normal_, ones_, uniform_, xavier_uniform_, zeros_
 from .native_ops import native_available, native_info, reload_native
 from .nn import (
     GELU,
@@ -199,8 +202,11 @@ __all__ = [
     "get_backend",
     "gradcheck",
     "graph_summary",
+    "huber_loss",
+    "initialization",
     "is_anomaly_detection_enabled",
     "is_grad_enabled",
+    "kaiming_uniform_",
     "load_checkpoint",
     "load_state_dict",
     "log_softmax",
@@ -214,7 +220,9 @@ __all__ = [
     "native_ops",
     "nn",
     "no_grad",
+    "normal_",
     "ones",
+    "ones_",
     "op_histogram",
     "optim",
     "profile",
@@ -241,6 +249,9 @@ __all__ = [
     "torch_available",
     "torch_interop",
     "torch_version",
+    "uniform_",
     "where",
+    "xavier_uniform_",
     "zeros",
+    "zeros_",
 ]

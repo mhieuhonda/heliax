@@ -242,6 +242,32 @@ def avg_pool2d(
     return result
 
 
+def huber_loss(prediction: Tensor, target: Any, delta: float = 1.0) -> Tensor:
+    target_data = (
+        target.numpy() if isinstance(target, Tensor) else np.asarray(target, dtype=prediction.dtype)
+    )
+    if delta <= 0:
+        raise ValueError("Huber delta must be positive")
+    difference = prediction - target_data
+    absolute = np.abs(difference.numpy())
+    quadratic = np.minimum(absolute, delta)
+    linear = absolute - quadratic
+    data = 0.5 * quadratic * quadratic + delta * linear
+    output = prediction._make(
+        np.asarray(data, dtype=prediction.dtype), (prediction,), lambda: None, "huber"
+    )
+    if output.requires_grad:
+
+        def run_backward() -> None:
+            derivative = np.where(
+                absolute <= delta, difference.numpy(), delta * np.sign(difference.numpy())
+            )
+            _accumulate(prediction, output.grad.numpy() * derivative)
+
+        output._backward = run_backward
+    return output.mean()
+
+
 def mean_squared_error(prediction: Tensor, target: Any) -> Tensor:
     target_data = (
         target.numpy() if isinstance(target, Tensor) else np.asarray(target, dtype=prediction.dtype)
@@ -258,9 +284,7 @@ def mean_absolute_error(prediction: Tensor, target: Any) -> Tensor:
     if output.requires_grad:
 
         def run_backward() -> None:
-            _accumulate(
-                prediction, output.grad.numpy() * np.sign(difference.numpy()) / prediction.size
-            )
+            _accumulate(prediction, output.grad.numpy() * np.sign(difference.numpy()))
 
         output._backward = run_backward
     return output.mean()
@@ -286,7 +310,7 @@ def binary_cross_entropy(logits: Tensor, target: Any, from_logits: bool = True) 
     if output.requires_grad:
 
         def run_backward() -> None:
-            _accumulate(logits, output.grad.numpy() * derivative / logits.size)
+            _accumulate(logits, output.grad.numpy() * derivative)
 
         output._backward = run_backward
     return output.mean()
