@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.23 — 2026-09-25
+
+### Fixed
+
+- Restored clean optimizer test coverage after Adam/AdamW semantics split.
+- Added explicit coupled-Adam and decoupled-AdamW regression tests.
+
 ## 0.6.22 — 2026-09-25
 
 ### Added

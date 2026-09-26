@@ -14,6 +14,24 @@ def make_regression_problem():
     return x, target, model, optimizer
 
 
+def test_adam_uses_coupled_weight_decay():
+    parameter = hx.Parameter(np.ones(2, dtype=np.float32))
+    parameter.grad = hx.tensor(np.ones(2, dtype=np.float32), requires_grad=False)
+    optimizer = hx.optim.Adam([parameter], lr=0.1, betas=(0.0, 0.0), weight_decay=0.5)
+    optimizer.step()
+    expected = 1.0 - 0.1 * (1.0 + 0.5 * 1.0)
+    assert np.allclose(parameter.numpy(), expected, atol=1e-6)
+
+
+def test_adamw_uses_decoupled_weight_decay():
+    parameter = hx.Parameter(np.ones(2, dtype=np.float32))
+    parameter.grad = hx.tensor(np.ones(2, dtype=np.float32), requires_grad=False)
+    optimizer = hx.optim.AdamW([parameter], lr=0.1, betas=(0.0, 0.0), weight_decay=0.5)
+    optimizer.step()
+    expected = 1.0 - 0.1 * 1.0 - 0.1 * 0.5 * 1.0
+    assert np.allclose(parameter.numpy(), expected, atol=1e-6)
+
+
 def test_sgd_reduces_loss():
     x, target, model, optimizer = make_regression_problem()
     initial = None
