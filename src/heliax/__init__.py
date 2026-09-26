@@ -115,6 +115,7 @@ from .profiler import (
     op_histogram,
     profile,
     training_memory_report,
+    workspace_memory_report,
 )
 from .quantization import (
     QuantizedLinear,
@@ -148,7 +149,7 @@ from .training import Trainer
 from .workspace import Workspace
 from .workspace import workspace as workspace_context
 
-__version__ = "0.6.2"
+__version__ = "0.6.3"
 
 __all__ = [
     "GELU",
@@ -309,6 +310,7 @@ __all__ = [
     "where",
     "workspace",
     "workspace_context",
+    "workspace_memory_report",
     "xavier_uniform_",
     "zeros",
     "zeros_",

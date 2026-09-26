@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.3 — 2026-09-25
+
+### Added
+
+- Workspace memory reporting in the profiler for pooled scratch buffers.
+- `memory_report` now includes workspace bytes in total storage accounting.
+
 ## 0.6.2 — 2026-09-25
 
 ### Added

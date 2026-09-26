@@ -90,6 +90,24 @@ def gradient_memory_report(module: object) -> dict[str, int]:
     }
 
 
+def workspace_memory_report(module: object) -> dict[str, int]:
+    """Report pooled workspace buffers held by modules."""
+
+    modules = getattr(module, "named_modules", None)
+    if not callable(modules):
+        raise TypeError("workspace_memory_report expects a Module with named_modules()")
+    total = 0
+    buffers = 0
+    for _, child in modules():
+        pool = getattr(child, "_workspace", None)
+        report = getattr(pool, "report", None)
+        if callable(report):
+            values = report()
+            total += int(values.get("allocated_bytes", 0))
+            buffers += int(values.get("live_buffers", 0))
+    return {"workspace_bytes": total, "workspace_buffers": buffers}
+
+
 def memory_report(module: object) -> dict[str, int]:
     parameters = getattr(module, "parameters", None)
     if not callable(parameters):
@@ -105,6 +123,8 @@ def memory_report(module: object) -> dict[str, int]:
         "total_bytes": parameter_bytes + buffer_bytes,
     }
     report.update(gradient_memory_report(module))
+    report.update(workspace_memory_report(module))
+    report["total_bytes"] += report["workspace_bytes"]
     return report
 
 

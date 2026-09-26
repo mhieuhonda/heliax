@@ -33,3 +33,13 @@ def test_gradient_and_training_memory_reports():
     training = hx.training_memory_report(model, loss)
     assert training["graph_nodes"] > 0
     assert training["total_training_bytes"] > training["parameter_bytes"]
+
+
+def test_workspace_memory_report():
+    model = hx.nn.Conv2d(1, 2, kernel_size=3, padding=1, rng=np.random.default_rng(1))
+    value = hx.tensor(np.ones((1, 1, 4, 4), dtype=np.float32))
+    model(value)
+    workspace = hx.workspace_memory_report(model)
+    assert workspace["workspace_bytes"] > 0
+    report = hx.memory_report(model)
+    assert report["workspace_bytes"] == workspace["workspace_bytes"]
