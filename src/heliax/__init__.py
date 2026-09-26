@@ -23,6 +23,7 @@ from .distributed import DistributedSampler, reduce_gradients
 from .functional import (
     add_relu,
     binary_cross_entropy,
+    causal_mask,
     clip,
     concatenate,
     cosine_similarity,
@@ -199,6 +200,7 @@ __all__ = [
     "backend",
     "backend_info",
     "binary_cross_entropy",
+    "causal_mask",
     "clip",
     "clip_grad_norm_",
     "compression_ratio",

@@ -557,6 +557,13 @@ def where(condition: Tensor | np.ndarray, left: Tensor, right: Tensor) -> Tensor
     return output
 
 
+def causal_mask(length: int, dtype: Any = bool) -> Tensor:
+    if length <= 0:
+        raise ValueError("causal mask length must be positive")
+    mask = np.triu(np.ones((length, length), dtype=bool), 1)
+    return Tensor(mask.astype(dtype), requires_grad=False)
+
+
 def l2_norm(
     value: Tensor,
     axis: int | tuple[int, ...] | None = None,

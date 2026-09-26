@@ -69,7 +69,7 @@ class NumpyBackend:
 
     def array(self, value: Any, dtype: Any | None = None) -> np.ndarray:
         array = _as_array(value, dtype)
-        if dtype is None and array.dtype.kind in "fc":
+        if dtype is None and array.dtype == np.float64:
             return array.astype(DEFAULT_DTYPE, copy=False)
         return np.ascontiguousarray(array) if array.ndim > 0 else array
 

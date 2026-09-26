@@ -56,9 +56,12 @@ class Module:
     def parameters(self) -> list[Parameter]:
         return [parameter for _, parameter in self.named_parameters()]
 
-    def zero_grad(self) -> None:
+    def zero_grad(self, set_to_none: bool = True) -> None:
         for parameter in self.parameters():
-            parameter.zero_grad()
+            if set_to_none:
+                parameter.zero_grad()
+            elif parameter.grad is not None:
+                parameter.grad.zero_()
 
     def register_buffer(self, name: str, value: np.ndarray, *, persistent: bool = True) -> None:
         if not hasattr(self, "_buffers"):
@@ -112,6 +115,12 @@ class Module:
 
     def cpu(self) -> Module:
         return self
+
+    def half(self) -> Module:
+        return self.dtype(np.float16)
+
+    def float(self) -> Module:
+        return self.dtype(np.float32)
 
     def dtype(self, dtype: Any) -> Module:
         for parameter in self.parameters():
