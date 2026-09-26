@@ -693,6 +693,7 @@ class GroupedConv2d(Module):
         stride: int | tuple[int, int] = 1,
         padding: int | tuple[int, int] = 0,
         bias: bool = True,
+        dilation: int | tuple[int, int] = 1,
         *,
         rng: np.random.Generator | None = None,
     ) -> None:
@@ -709,6 +710,7 @@ class GroupedConv2d(Module):
                     stride,
                     padding,
                     bias,
+                    dilation=dilation,
                     rng=rng,
                 )
                 for _ in range(groups)

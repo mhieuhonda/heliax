@@ -13,3 +13,8 @@ def test_grouped_conv_forward_and_backward():
     output.sum().backward()
     assert value.grad is not None
     assert len(layer.parameters()) == 4
+
+    dilated = hx.GroupedConv2d(
+        4, 4, groups=2, kernel_size=3, padding=1, dilation=2, rng=np.random.default_rng(8)
+    )
+    assert dilated(value.detach()).shape == (2, 4, 3, 3)
