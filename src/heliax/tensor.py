@@ -371,7 +371,7 @@ class Tensor:
     def __matmul__(self, other: Any) -> Tensor:
         other_value = other.data if isinstance(other, Tensor) else other
         output = self._make(
-            np.matmul(self._data, other_value),
+            get_backend().matmul(self._data, other_value),
             (self, other) if isinstance(other, Tensor) else (self,),
             lambda: None,
             "matmul",
@@ -380,9 +380,9 @@ class Tensor:
 
             def run_backward() -> None:
                 grad = output.grad.numpy()
-                _accumulate(self, np.matmul(grad, np.swapaxes(other_value, -1, -2)))
+                _accumulate(self, get_backend().matmul(grad, np.swapaxes(other_value, -1, -2)))
                 if isinstance(other, Tensor):
-                    _accumulate(other, np.matmul(np.swapaxes(self._data, -1, -2), grad))
+                    _accumulate(other, get_backend().matmul(np.swapaxes(self._data, -1, -2), grad))
 
             output._backward = run_backward
         return output

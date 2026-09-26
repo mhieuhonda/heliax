@@ -433,7 +433,7 @@ def fused_linear_bias(
 
     input_data = value.numpy()
     weight_data = weight.numpy()
-    output_data = np.matmul(input_data, np.swapaxes(weight_data, -1, -2))
+    output_data = get_backend().matmul(input_data, np.swapaxes(weight_data, -1, -2))
     if bias is not None:
         output_data = output_data + bias.numpy()
     parents = (value, weight) + ((bias,) if bias is not None else ())
