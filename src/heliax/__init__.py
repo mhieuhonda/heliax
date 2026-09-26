@@ -17,6 +17,7 @@ from . import (
     serialization,
     torch_backend,
     torch_interop,
+    training,
 )
 from .autograd import checkpoint, gradcheck
 from .autotune import autotune_report, select_fastest, time_callable
@@ -140,8 +141,9 @@ from .tensor import (
 )
 from .torch_backend import TorchBackend, get_torch_backend, torch_backend_available
 from .torch_interop import TorchAccelerator, from_torch, to_torch, torch_available, torch_version
+from .training import Trainer
 
-__version__ = "0.4.7"
+__version__ = "0.4.8"
 
 __all__ = [
     "GELU",
@@ -195,6 +197,7 @@ __all__ = [
     "TensorDataset",
     "TorchAccelerator",
     "TorchBackend",
+    "Trainer",
     "TransformerEncoder",
     "TransformerEncoderLayer",
     "add_relu",
@@ -293,6 +296,7 @@ __all__ = [
     "torch_backend_available",
     "torch_interop",
     "torch_version",
+    "training",
     "uniform_",
     "where",
     "xavier_uniform_",

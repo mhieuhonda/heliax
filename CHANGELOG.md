@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.8 — 2026-09-25
+
+### Added
+
+- High-level `Trainer` with accumulation, scheduling, evaluation, and checkpoint helpers.
+- Training loop regression coverage.
+
 ## 0.4.7 — 2026-09-25
 
 ### Fixed
