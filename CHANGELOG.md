@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.6 — 2026-09-25
+
+### Added
+
+- Explicit CPU device validation for `tensor(..., device=...)`, `Tensor.to_device`, and `Module.to_device`.
+- Clear guidance for accelerator devices through Torch conversion/backends.
+
 ## 0.5.5 — 2026-09-25
 
 ### Added

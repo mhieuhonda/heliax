@@ -38,6 +38,16 @@ def test_shapes_and_views_backward():
     assert np.array_equal(value.grad.numpy()[:, 0], np.zeros(3, dtype=np.float32))
 
 
+def test_explicit_cpu_device_policy():
+    value = hx.tensor([1.0], device="cpu:0")
+    assert value.device == "cpu"
+    assert value.to_device("cpu") is value
+    with pytest.raises(ValueError):
+        hx.tensor([1.0], device="cuda")
+    model = hx.nn.Linear(1, 1, rng=np.random.default_rng(1))
+    assert model.to_device("cpu:0") is model
+
+
 def test_requires_grad_and_detach_in_place():
     value = hx.tensor([1.0, 2.0], requires_grad=True)
     output = value * 2

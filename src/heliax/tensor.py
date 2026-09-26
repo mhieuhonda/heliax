@@ -14,6 +14,15 @@ _GRAD_ENABLED = True
 _ANOMALY_DETECTION = False
 
 
+def _normalize_device(device: str) -> str:
+    normalized = str(device).lower()
+    if normalized in {"cpu", "cpu:0"}:
+        return "cpu"
+    raise ValueError(
+        "Heliax Tensor storage is CPU/NumPy; use to_torch/TorchBackend for accelerator devices"
+    )
+
+
 @contextmanager
 def no_grad() -> Iterator[None]:
     """Temporarily disable graph construction."""
@@ -731,6 +740,12 @@ class Tensor:
     def to(self, dtype: Any) -> Tensor:
         return self.astype(dtype)
 
+    def to_device(self, device: str) -> Tensor:
+        """Validate an explicit device target; Heliax storage is CPU NumPy."""
+
+        _normalize_device(device)
+        return self
+
     def __getitem__(self, key: Any) -> Tensor:
         output = self._make(self._data[key], (self,), lambda: None, "getitem")
         if output.requires_grad:
@@ -775,8 +790,7 @@ class Parameter(Tensor):
 def tensor(
     data: Any, *, dtype: Any | None = None, requires_grad: bool = False, device: str = "cpu"
 ) -> Tensor:
-    if device != "cpu":
-        raise NotImplementedError("Heliax 0.1 currently exposes the CPU backend only")
+    _normalize_device(device)
     return Tensor(
         data if dtype is None else np.asarray(data, dtype=dtype), requires_grad=requires_grad
     )

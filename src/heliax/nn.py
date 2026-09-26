@@ -9,7 +9,7 @@ import numpy as np
 
 from . import functional as F
 from .backend import DEFAULT_DTYPE, get_backend
-from .tensor import Parameter, Tensor, _accumulate, zeros
+from .tensor import Parameter, Tensor, _accumulate, _normalize_device, zeros
 
 
 class Module:
@@ -114,6 +114,12 @@ class Module:
         return self.dtype(dtype)
 
     def cpu(self) -> Module:
+        return self
+
+    def to_device(self, device: str) -> Module:
+        """Validate a device target; Heliax module storage is CPU NumPy."""
+
+        _normalize_device(device)
         return self
 
     def half(self) -> Module:
