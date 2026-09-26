@@ -91,9 +91,11 @@ def _accumulate(tensor: Tensor, gradient: np.ndarray) -> None:
         return
     reduced = unbroadcast(np.asarray(gradient, dtype=tensor._data.dtype), tensor.shape)
     if tensor.grad is None:
-        tensor.grad = Tensor(reduced, requires_grad=False)
+        tensor.grad = Tensor(np.array(reduced, copy=True), requires_grad=False)
     else:
-        tensor.grad = Tensor(tensor.grad._data + reduced, requires_grad=False)
+        # Accumulation is a hot path; reuse the gradient buffer instead of
+        # allocating a new Tensor for every graph edge.
+        tensor.grad._data += reduced
 
 
 class Tensor:

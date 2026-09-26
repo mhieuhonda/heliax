@@ -70,7 +70,14 @@ def test_clone_and_inplace_operations():
     assert value.is_contiguous
 
 
-def test_error_on_non_scalar_backward():
+def test_gradient_accumulation_reuses_buffer():
+    value = hx.tensor([1.0, 2.0], requires_grad=True)
+    (value * 1.0).sum().backward()
+    first_grad = value.grad
+    (value * 2.0).sum().backward()
+    assert value.grad is first_grad
+    assert np.allclose(value.grad.numpy(), [3.0, 3.0])
+
     value = hx.tensor([1.0, 2.0], requires_grad=True)
     with pytest.raises(RuntimeError):
         (value * value).backward()

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.7 — 2026-09-25
+
+### Fixed
+
+- Reuse gradient buffers in-place during autograd accumulation to reduce hot-path allocations.
+- Preserve independent gradient storage for alias-safe numerical checks.
+
 ## 0.4.6 — 2026-09-25
 
 ### Added
