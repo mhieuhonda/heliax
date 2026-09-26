@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.3 — 2026-09-25
+
+### Added
+
+- Grouped and dilated Conv2d paths.
+- ModelEMA, explicit precision policy, and dynamic gradient scaling.
+- Fresh-optimizer checkpoint state restoration and expanded serialization tests.
+- Additional elementwise, pooling, normalization, recurrent, and attention regression coverage.
+
 ## 0.3.2 — 2026-09-25
 
 ### Added
