@@ -170,6 +170,17 @@ class Tensor:
             output._op = op
         return output
 
+    def requires_grad_(self, requires_grad: bool = True) -> Tensor:
+        self.requires_grad = bool(requires_grad)
+        return self
+
+    def detach_(self) -> Tensor:
+        self._prev.clear()
+        self._backward = lambda: None
+        self._op = ""
+        self.requires_grad = False
+        return self
+
     def detach(self) -> Tensor:
         return Tensor(self._data.copy(), requires_grad=False)
 

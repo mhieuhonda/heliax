@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.5 — 2026-09-25
+
+### Added
+
+- In-place `requires_grad_` and `detach_` tensor controls.
+- Additional autograd lifecycle regression coverage.
+
 ## 0.4.4 — 2026-09-25
 
 ### Fixed
