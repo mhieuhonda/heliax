@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -54,6 +55,8 @@ def save_checkpoint(
     for key, value in (metadata or {}).items():
         if isinstance(value, (str, int, float, bool)):
             state[f"meta.{key}"] = np.asarray(value)
+        else:
+            state[f"meta.json.{key}"] = np.asarray(json.dumps(value, sort_keys=True))
     return save_state_dict(path, state)
 
 
@@ -70,7 +73,9 @@ def load_checkpoint(
     model.load_state_dict(model_state)
     metadata: dict[str, Any] = {}
     for key, value in archive.items():
-        if key.startswith("meta."):
+        if key.startswith("meta.json."):
+            metadata[key.removeprefix("meta.json.")] = json.loads(str(np.asarray(value).item()))
+        elif key.startswith("meta."):
             metadata[key.removeprefix("meta.")] = (
                 value.item() if np.asarray(value).ndim == 0 else value
             )

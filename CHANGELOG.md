@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.0 — 2026-09-25
+
+### Added
+
+- Rich JSON checkpoint metadata for nested hyperparameters, lists, and dictionaries.
+- Atomic serialization and non-strict loading retained as the stable checkpoint baseline.
+
 ## 0.5.9 — 2026-09-25
 
 ### Added

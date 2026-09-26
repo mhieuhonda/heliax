@@ -37,6 +37,17 @@ def test_buffer_round_trip_in_checkpoint(tmp_path):
         assert np.allclose(restored.state_dict()[key], expected), key
 
 
+def test_rich_checkpoint_metadata_round_trip(tmp_path):
+    model = hx.nn.Linear(2, 1, rng=np.random.default_rng(4))
+    metadata = {"hparams": {"lr": 0.01, "layers": [2, 4]}, "tags": ["a", "b"], "epoch": 2}
+    path = tmp_path / "rich.npz"
+    hx.save_checkpoint(path, model, metadata=metadata)
+    restored = hx.load_checkpoint(path, model)
+    assert restored["hparams"] == metadata["hparams"]
+    assert restored["tags"] == metadata["tags"]
+    assert restored["epoch"] == 2
+
+
 def test_non_strict_state_dict_loading():
     model = hx.nn.Sequential(hx.nn.Linear(2, 2, rng=np.random.default_rng(1)), hx.nn.ReLU())
     state = {"layers.0.bias": np.ones(2, dtype=np.float32)}
