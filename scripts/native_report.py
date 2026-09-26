@@ -25,6 +25,11 @@ def _time(function, *, warmup: int = 2, repeats: int = 7) -> float:
     return float(np.median(samples))
 
 
+def _portable_adagrad(parameter: np.ndarray, gradient: np.ndarray, accumulator: np.ndarray) -> None:
+    accumulator += gradient * gradient
+    parameter -= 0.001 * gradient / (np.sqrt(accumulator) + 1e-8)
+
+
 def _portable_rmsprop(parameter: np.ndarray, gradient: np.ndarray, average: np.ndarray) -> None:
     average *= 0.9
     average += 0.1 * gradient * gradient
@@ -54,10 +59,23 @@ def build_report(*, repeats: int = 7) -> dict[str, object]:
     target_values = generator.normal(size=(128, 16)).astype(np.float32)
     bce_logits = generator.normal(size=(128, 16)).astype(np.float32)
     bce_targets = generator.integers(0, 2, size=(128, 16)).astype(np.float32)
+    adagrad_parameter = np.ones(4096, dtype=np.float32)
+    adagrad_gradient = np.linspace(-1.0, 1.0, 4096, dtype=np.float32)
+    adagrad_accumulator = np.zeros(4096, dtype=np.float32)
     rms_parameter = np.ones(4096, dtype=np.float32)
     rms_gradient = np.linspace(-1.0, 1.0, 4096, dtype=np.float32)
     rms_average = np.zeros(4096, dtype=np.float32)
     cases = {
+        "adagrad": (
+            lambda: hx.native_ops.adagrad(
+                adagrad_parameter,
+                adagrad_gradient,
+                adagrad_accumulator,
+                learning_rate=0.001,
+                epsilon=1e-8,
+            ),
+            lambda: _portable_adagrad(adagrad_parameter, adagrad_gradient, adagrad_accumulator),
+        ),
         "rmsprop": (
             lambda: hx.native_ops.rmsprop(
                 rms_parameter,

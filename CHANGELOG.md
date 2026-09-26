@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.20 — 2026-09-25
+
+### Added
+
+- Native fused Adagrad update kernel with backend dispatch.
+- Native report now covers fourteen kernels.
+
 ## 0.6.19 — 2026-09-25
 
 ### Added

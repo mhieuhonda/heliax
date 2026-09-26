@@ -8,6 +8,7 @@ from typing import Any
 
 import numpy as np
 
+from . import native_ops
 from .backend import get_backend
 from .tensor import Parameter, Tensor, no_grad
 
@@ -125,11 +126,25 @@ class Adagrad(Optimizer):
                     parameter._data, options["initial_accumulator"], dtype=np.float32
                 )
             gradient = parameter.grad.numpy() + options["weight_decay"] * parameter.numpy()
-            state["sum"] += gradient * gradient
-            with no_grad():
-                parameter._data -= (
-                    options["lr"] * gradient / (np.sqrt(state["sum"]) + options["eps"])
-                )
+            if (
+                parameter._data.dtype == np.float32
+                and native_ops.native_enabled()
+                and native_ops.native_available()
+            ):
+                with no_grad():
+                    native_ops.adagrad(
+                        parameter._data,
+                        gradient,
+                        state["sum"],
+                        learning_rate=options["lr"],
+                        epsilon=options["eps"],
+                    )
+            else:
+                state["sum"] += gradient * gradient
+                with no_grad():
+                    parameter._data -= (
+                        options["lr"] * gradient / (np.sqrt(state["sum"]) + options["eps"])
+                    )
 
 
 class Adam(Optimizer):

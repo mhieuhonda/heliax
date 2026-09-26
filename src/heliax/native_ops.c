@@ -52,6 +52,15 @@ void hx_softmax_lastdim(const float *x, float *out, size_t rows, size_t cols) {
     }
 }
 
+void hx_adagrad(float *parameter, const float *gradient, float *accumulator,
+                size_t n, float learning_rate, float epsilon) {
+    #pragma omp parallel for if (n > 4096)
+    for (size_t i = 0; i < n; ++i) {
+        accumulator[i] += gradient[i] * gradient[i];
+        parameter[i] -= learning_rate * gradient[i] / (sqrtf(accumulator[i]) + epsilon);
+    }
+}
+
 void hx_rmsprop(float *parameter, const float *gradient, float *square_average,
                 size_t n, float learning_rate, float decay, float epsilon) {
     #pragma omp parallel for if (n > 4096)

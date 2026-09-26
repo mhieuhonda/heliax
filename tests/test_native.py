@@ -72,6 +72,18 @@ def test_native_kernels_match_numpy_reference():
     )
     assert np.all(parameter < 1.0)
     assert np.all(first > 0.0) and np.all(second > 0.0)
+    adagrad_parameter = np.ones(5, dtype=np.float32)
+    adagrad_gradient = np.arange(1, 6, dtype=np.float32)
+    adagrad_accumulator = np.zeros(5, dtype=np.float32)
+    hx.native_ops.adagrad(
+        adagrad_parameter,
+        adagrad_gradient,
+        adagrad_accumulator,
+        learning_rate=0.01,
+        epsilon=1e-8,
+    )
+    assert np.all(adagrad_parameter < 1.0)
+    assert np.all(adagrad_accumulator > 0.0)
     rms_parameter = np.ones(5, dtype=np.float32)
     rms_gradient = np.arange(1, 6, dtype=np.float32)
     rms_average = np.zeros(5, dtype=np.float32)
