@@ -6,7 +6,7 @@
 
 - Fused cross-entropy forward/backward node and `CrossEntropyLoss` module.
 - PrefetchLoader, elementwise `where`, comparison Tensor operators, and scalar conveniences.
-- Adagrad/ExponentialLR, Huber loss, checkpoint format validation, and model summary diagnostics.
+- Adagrad/ExponentialLR, Huber loss, checkpoint format validation, fresh-optimizer state restoration, and model summary diagnostics.
 - Additional layer, optimizer, serialization, and regression tests.
 
 ## 0.3.0 — 2026-09-25
