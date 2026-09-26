@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.32 — 2026-09-25
+
+### Added
+
+- `QuantizedLinear.from_linear` conversion helper.
+- Conversion regression coverage for quantized linear layers.
+
 ## 0.6.31 — 2026-09-25
 
 ### Added

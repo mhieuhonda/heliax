@@ -105,6 +105,23 @@ class QuantizedLinear(Module):
             "bias", np.zeros(out_features, dtype=dtype) if bias else np.zeros(0, dtype=dtype)
         )
 
+    @classmethod
+    def from_linear(cls, linear: Any, bits: int = 8) -> QuantizedLinear:
+        weight = linear.weight.numpy()
+        packed = quantize(weight, bits=bits, symmetric=True)
+        layer = cls(
+            linear.in_features,
+            linear.out_features,
+            bits=bits,
+            bias=linear.bias is not None,
+        )
+        layer._buffers["weight_int8"][...] = packed.data
+        layer._buffers["scale"][...] = packed.scale
+        layer._buffers["zero_point"][...] = packed.zero_point
+        if linear.bias is not None:
+            layer._buffers["bias"][...] = linear.bias.numpy()
+        return layer
+
     def dequantized_weight(self) -> np.ndarray:
         return (
             self._buffers["weight_int8"].astype(np.float32) - int(self._buffers["zero_point"])
