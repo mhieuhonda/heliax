@@ -654,6 +654,51 @@ class AvgPool2d(Module):
         return F.avg_pool2d(value, self.kernel_size, self.stride, self.padding)
 
 
+class GroupedConv2d(Module):
+    """Grouped convolution composed from ordinary Conv2d blocks."""
+
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        groups: int,
+        kernel_size: int | tuple[int, int],
+        stride: int | tuple[int, int] = 1,
+        padding: int | tuple[int, int] = 0,
+        bias: bool = True,
+        *,
+        rng: np.random.Generator | None = None,
+    ) -> None:
+        super().__init__()
+        if groups <= 0 or in_channels % groups or out_channels % groups:
+            raise ValueError("GroupedConv2d channels must be divisible by groups")
+        self.groups = int(groups)
+        self.blocks = ModuleList(
+            *(
+                Conv2d(
+                    in_channels // groups,
+                    out_channels // groups,
+                    kernel_size,
+                    stride,
+                    padding,
+                    bias,
+                    rng=rng,
+                )
+                for _ in range(groups)
+            )
+        )
+
+    def forward(self, value: Tensor) -> Tensor:
+        if value.ndim != 4:
+            raise ValueError("GroupedConv2d expects NCHW input")
+        group_size = value.shape[1] // self.groups
+        outputs = [
+            block(value[:, index * group_size : (index + 1) * group_size])
+            for index, block in enumerate(self.blocks.items)
+        ]
+        return F.concatenate(outputs, axis=1)
+
+
 class MultiheadAttention(Module):
     """Scaled dot-product multi-head attention for N x L x D tensors."""
 
