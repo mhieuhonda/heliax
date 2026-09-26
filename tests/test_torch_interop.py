@@ -18,5 +18,7 @@ def test_torch_conversion_round_trip_when_available():
     converted = hx.to_torch(source)
     restored = hx.from_torch(converted)
     assert np.allclose(restored.numpy(), source.numpy())
+    device_tensor = hx.to_torch(source, device="cpu")
+    assert device_tensor.device.type == "cpu"
     accelerator = hx.torch_interop.TorchAccelerator()
     assert accelerator.info()["backend"] == "pytorch-interop"

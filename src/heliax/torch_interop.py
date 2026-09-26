@@ -38,32 +38,29 @@ def torch_version() -> str | None:
     return str(_torch().__version__)
 
 
-def from_torch(value: Any, *, requires_grad: bool = False, detach: bool = True) -> Tensor:
-    """Convert a CPU PyTorch tensor to a Heliax Tensor.
-
-    A PyTorch autograd graph is not silently translated into Heliax's graph.
-    Pass ``detach=False`` only when the source tensor is already detached and
-    you want to preserve its underlying storage semantics.
-    """
+def from_torch(
+    value: Any, *, requires_grad: bool = False, detach: bool = True, device: str = "cpu"
+) -> Tensor:
+    """Convert a PyTorch tensor to a Heliax CPU Tensor."""
 
     torch = _torch()
     if not isinstance(value, torch.Tensor):
         raise TypeError("from_torch expects a torch.Tensor")
-    if value.device.type != "cpu":
-        raise ValueError("Heliax currently converts CPU tensors only; call .cpu() first")
     data = value.detach() if detach else value
-    array = data.numpy()
+    if device != "cpu":
+        raise ValueError("from_torch writes into Heliax CPU storage; use device='cpu'")
+    array = data.to("cpu").numpy()
     if not array.flags.writeable:
         array = np.array(array, copy=True)
     return Tensor(array, requires_grad=requires_grad)
 
 
-def to_torch(value: Tensor, *, requires_grad: bool = False) -> Any:
-    """Convert a Heliax Tensor to a CPU PyTorch tensor."""
+def to_torch(value: Tensor, *, requires_grad: bool = False, device: str = "cpu") -> Any:
+    """Convert a Heliax Tensor to a PyTorch tensor on ``device``."""
 
     torch = _torch()
     array = np.array(value.numpy(), copy=True)
-    result = torch.from_numpy(array)
+    result = torch.from_numpy(array).to(device)
     if requires_grad:
         result = result.detach().requires_grad_(True)
     return result

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.5 — 2026-09-25
+
+### Added
+
+- Explicit `device` arguments for `to_torch`/`from_torch` conversions.
+- Torch interop documentation for CPU storage and accelerator device copies.
+
 ## 0.5.4 — 2026-09-25
 
 ### Added

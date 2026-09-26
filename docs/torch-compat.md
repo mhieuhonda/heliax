@@ -35,7 +35,7 @@ These are not a claim of universal superiority. The workloads are small, CPU-onl
 
 ## Conversion rules
 
-- `from_torch` detaches the PyTorch autograd graph by default.
-- `to_torch` creates a CPU PyTorch tensor from Heliax storage.
+- `from_torch` copies any source device into Heliax CPU storage and detaches the PyTorch autograd graph by default.
+- `to_torch` accepts an explicit `device` (CPU, CUDA, MPS, ...) and copies Heliax storage there.
 - `TorchAccelerator` exposes explicit matmul, softmax, GELU, layer norm, and cross-entropy calls.
 - A future gradient bridge must be opt-in and must not silently mix graphs.
