@@ -183,7 +183,7 @@ class Adam(Optimizer):
             state["step"] += 1
             beta1, beta2 = options["beta1"], options["beta2"]
             with no_grad():
-                backend.adamw_update(
+                backend.adam_update(
                     parameter._data,
                     parameter.grad.numpy(),
                     state["first_moment"],

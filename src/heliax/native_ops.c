@@ -52,6 +52,20 @@ void hx_softmax_lastdim(const float *x, float *out, size_t rows, size_t cols) {
     }
 }
 
+void hx_adam(float *parameter, const float *gradient, float *first_moment,
+              float *second_moment, size_t n, float learning_rate,
+              float beta1, float beta2, float epsilon, float weight_decay,
+              float bias1, float bias2) {
+    #pragma omp parallel for if (n > 4096)
+    for (size_t i = 0; i < n; ++i) {
+        first_moment[i] = beta1 * first_moment[i] + (1.0f - beta1) * gradient[i];
+        second_moment[i] = beta2 * second_moment[i] + (1.0f - beta2) * gradient[i] * gradient[i];
+        const float first = first_moment[i] / bias1;
+        const float second = second_moment[i] / bias2;
+        parameter[i] -= learning_rate * (first / (sqrtf(second) + epsilon) + weight_decay * parameter[i]);
+    }
+}
+
 void hx_sgd(float *parameter, const float *gradient, float *momentum_buffer,
             size_t n, float learning_rate, float weight_decay,
             float momentum, int nesterov) {

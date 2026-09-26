@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.22 — 2026-09-25
+
+### Added
+
+- Native fused Adam update kernel with coupled weight decay.
+- Fixed Adam to use coupled semantics instead of the AdamW decoupled path.
+- Native report now covers sixteen kernels.
+
 ## 0.6.21 — 2026-09-25
 
 ### Added

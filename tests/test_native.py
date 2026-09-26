@@ -72,6 +72,24 @@ def test_native_kernels_match_numpy_reference():
     )
     assert np.all(parameter < 1.0)
     assert np.all(first > 0.0) and np.all(second > 0.0)
+    adam_parameter = np.ones(5, dtype=np.float32)
+    adam_gradient = np.arange(1, 6, dtype=np.float32)
+    adam_first = np.zeros(5, dtype=np.float32)
+    adam_second = np.zeros(5, dtype=np.float32)
+    hx.native_ops.adam(
+        adam_parameter,
+        adam_gradient,
+        adam_first,
+        adam_second,
+        learning_rate=0.001,
+        beta1=0.9,
+        beta2=0.999,
+        epsilon=1e-8,
+        weight_decay=0.0,
+        bias_correction1=0.1,
+        bias_correction2=0.001,
+    )
+    assert np.all(adam_parameter < 1.0)
     sgd_parameter = np.ones(5, dtype=np.float32)
     sgd_gradient = np.arange(1, 6, dtype=np.float32)
     sgd_momentum = np.zeros(5, dtype=np.float32)

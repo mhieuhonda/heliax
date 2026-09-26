@@ -25,6 +25,16 @@ def _time(function, *, warmup: int = 2, repeats: int = 7) -> float:
     return float(np.median(samples))
 
 
+def _portable_adam(
+    parameter: np.ndarray, gradient: np.ndarray, first: np.ndarray, second: np.ndarray
+) -> None:
+    first *= 0.9
+    first += 0.1 * gradient
+    second *= 0.999
+    second += 0.001 * gradient * gradient
+    parameter -= 0.001 * ((first / 0.1) / (np.sqrt(second / 0.001) + 1e-8))
+
+
 def _portable_sgd(parameter: np.ndarray, gradient: np.ndarray, momentum: np.ndarray) -> None:
     momentum *= 0.9
     momentum += gradient
@@ -74,7 +84,27 @@ def build_report(*, repeats: int = 7) -> dict[str, object]:
     rms_parameter = np.ones(4096, dtype=np.float32)
     rms_gradient = np.linspace(-1.0, 1.0, 4096, dtype=np.float32)
     rms_average = np.zeros(4096, dtype=np.float32)
+    adam_parameter = np.ones(4096, dtype=np.float32)
+    adam_gradient = np.linspace(-1.0, 1.0, 4096, dtype=np.float32)
+    adam_first = np.zeros(4096, dtype=np.float32)
+    adam_second = np.zeros(4096, dtype=np.float32)
     cases = {
+        "adam": (
+            lambda: hx.native_ops.adam(
+                adam_parameter,
+                adam_gradient,
+                adam_first,
+                adam_second,
+                learning_rate=0.001,
+                beta1=0.9,
+                beta2=0.999,
+                epsilon=1e-8,
+                weight_decay=0.0,
+                bias_correction1=0.1,
+                bias_correction2=0.001,
+            ),
+            lambda: _portable_adam(adam_parameter, adam_gradient, adam_first, adam_second),
+        ),
         "sgd": (
             lambda: hx.native_ops.sgd(
                 sgd_parameter,

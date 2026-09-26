@@ -236,6 +236,52 @@ class NumpyBackend:
             log_probs, flat_targets.reshape(logits.shape[:-1] + (1,)), axis=axis
         ).reshape(-1)
 
+    def adam_update(
+        self,
+        parameter: np.ndarray,
+        gradient: np.ndarray,
+        first_moment: np.ndarray,
+        second_moment: np.ndarray,
+        learning_rate: float,
+        beta1: float,
+        beta2: float,
+        epsilon: float,
+        weight_decay: float,
+        bias_correction1: float,
+        bias_correction2: float,
+    ) -> None:
+        if (
+            parameter.dtype == np.float32
+            and native_ops.native_enabled()
+            and native_ops.native_available()
+        ):
+            try:
+                native_ops.adam(
+                    parameter,
+                    gradient,
+                    first_moment,
+                    second_moment,
+                    learning_rate=learning_rate,
+                    beta1=beta1,
+                    beta2=beta2,
+                    epsilon=epsilon,
+                    weight_decay=weight_decay,
+                    bias_correction1=bias_correction1,
+                    bias_correction2=bias_correction2,
+                )
+                return
+            except RuntimeError:
+                pass
+        first_moment *= beta1
+        first_moment += (1.0 - beta1) * gradient
+        second_moment *= beta2
+        second_moment += (1.0 - beta2) * (gradient * gradient)
+        first_hat = first_moment / bias_correction1
+        second_hat = second_moment / bias_correction2
+        parameter -= learning_rate * (
+            first_hat / (np.sqrt(second_hat) + epsilon) + weight_decay * parameter
+        )
+
     def adamw_update(
         self,
         parameter: np.ndarray,
