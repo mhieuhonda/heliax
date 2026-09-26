@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.18 — 2026-09-25
+
+### Added
+
+- Non-accumulating `autograd.grad` API with selected-input gradient extraction.
+- Regression coverage for grad isolation and graph retention.
+
 ## 0.6.17 — 2026-09-25
 
 ### Fixed

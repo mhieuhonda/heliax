@@ -20,7 +20,7 @@ from . import (
     training,
     workspace,
 )
-from .autograd import checkpoint, gradcheck
+from .autograd import checkpoint, grad, gradcheck
 from .autotune import autotune_report, select_fastest, time_callable
 from .backend import available_backends, backend_info, get_backend, set_backend
 from .data import DataLoader, PrefetchLoader, TensorDataset, fit, seed_everything
@@ -151,7 +151,7 @@ from .training import Trainer
 from .workspace import Workspace
 from .workspace import workspace as workspace_context
 
-__version__ = "0.6.17"
+__version__ = "0.6.18"
 
 __all__ = [
     "GELU",
@@ -250,6 +250,7 @@ __all__ = [
     "gelu",
     "get_backend",
     "get_torch_backend",
+    "grad",
     "gradcheck",
     "gradient_memory_report",
     "graph_summary",
