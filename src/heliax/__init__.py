@@ -17,7 +17,7 @@ from . import (
 )
 from .autograd import gradcheck
 from .backend import available_backends, backend_info, get_backend, set_backend
-from .data import DataLoader, TensorDataset, fit, seed_everything
+from .data import DataLoader, PrefetchLoader, TensorDataset, fit, seed_everything
 from .distributed import DistributedSampler, reduce_gradients
 from .functional import (
     add_relu,
@@ -159,6 +159,7 @@ __all__ = [
     "MultiheadAttention",
     "Parameter",
     "PositionalEncoding",
+    "PrefetchLoader",
     "ProfileResult",
     "QuantizedTensor",
     "RMSProp",

@@ -74,6 +74,42 @@ class DataLoader:
         return (length + self.batch_size - 1) // self.batch_size
 
 
+class PrefetchLoader:
+    """Small iterator wrapper that prepares a few batches ahead."""
+
+    def __init__(self, loader: Iterable[tuple[Tensor, ...]], depth: int = 2) -> None:
+        if depth < 0:
+            raise ValueError("prefetch depth must be non-negative")
+        self.loader = loader
+        self.depth = int(depth)
+
+    def __iter__(self) -> Iterator[tuple[Tensor, ...]]:
+        from collections import deque
+
+        if self.depth == 0:
+            yield from self.loader
+            return
+        iterator = iter(self.loader)
+        queue: deque[tuple[Tensor, ...]] = deque()
+        exhausted = False
+        for _ in range(self.depth):
+            try:
+                queue.append(next(iterator))
+            except StopIteration:
+                exhausted = True
+                break
+        while queue:
+            yield queue.popleft()
+            if not exhausted:
+                try:
+                    queue.append(next(iterator))
+                except StopIteration:
+                    exhausted = True
+
+    def __len__(self) -> int:
+        return len(self.loader)  # type: ignore[arg-type]
+
+
 def fit(
     model: Any,
     loader: Iterable[tuple[Tensor, ...]],
