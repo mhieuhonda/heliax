@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.16 — 2026-09-25
+
+### Added
+
+- `ReduceLROnPlateau` scheduler with min/max modes, patience, factor, and threshold.
+- Regression coverage for plateau learning-rate reduction.
+
 ## 0.6.15 — 2026-09-25
 
 ### Added

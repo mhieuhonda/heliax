@@ -377,6 +377,47 @@ class ExponentialLR(LRScheduler):
         return self.base_lrs[0] * (self.gamma**self.last_epoch)
 
 
+class ReduceLROnPlateau:
+    def __init__(
+        self,
+        optimizer: Optimizer,
+        *,
+        mode: str = "min",
+        factor: float = 0.1,
+        patience: int = 5,
+        min_lr: float = 0.0,
+        threshold: float = 1e-4,
+    ) -> None:
+        if mode not in {"min", "max"} or not 0.0 < factor < 1.0 or patience < 0 or min_lr < 0:
+            raise ValueError("invalid ReduceLROnPlateau hyperparameters")
+        self.optimizer = optimizer
+        self.mode = mode
+        self.factor = float(factor)
+        self.patience = int(patience)
+        self.min_lr = float(min_lr)
+        self.threshold = float(threshold)
+        self.best = float("inf") if mode == "min" else float("-inf")
+        self.num_bad_epochs = 0
+
+    def step(self, metric: float) -> float:
+        metric = float(metric)
+        improved = (
+            metric < self.best - self.threshold
+            if self.mode == "min"
+            else metric > self.best + self.threshold
+        )
+        if improved:
+            self.best = metric
+            self.num_bad_epochs = 0
+        else:
+            self.num_bad_epochs += 1
+        if self.num_bad_epochs > self.patience:
+            current = max(self.optimizer.defaults["lr"] * self.factor, self.min_lr)
+            self.optimizer.defaults["lr"] = current
+            self.num_bad_epochs = 0
+        return float(self.optimizer.defaults["lr"])
+
+
 class CosineAnnealingLR(LRScheduler):
     def __init__(
         self, optimizer: Optimizer, t_max: int, eta_min: float = 0.0, last_epoch: int = -1

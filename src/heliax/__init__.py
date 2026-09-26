@@ -100,6 +100,7 @@ from .optim import (
     CosineAnnealingWarmRestarts,
     ExponentialLR,
     ModelEMA,
+    ReduceLROnPlateau,
     RMSProp,
     StepLR,
     clip_grad_norm_,
@@ -150,7 +151,7 @@ from .training import Trainer
 from .workspace import Workspace
 from .workspace import workspace as workspace_context
 
-__version__ = "0.6.15"
+__version__ = "0.6.16"
 
 __all__ = [
     "GELU",
@@ -195,6 +196,7 @@ __all__ = [
     "QuantizedTensor",
     "RMSProp",
     "ReLU",
+    "ReduceLROnPlateau",
     "Sequential",
     "SiLU",
     "Sigmoid",
