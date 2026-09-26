@@ -476,6 +476,7 @@ class Conv2d(Module):
         stride: int | tuple[int, int] = 1,
         padding: int | tuple[int, int] = 0,
         bias: bool = True,
+        dilation: int | tuple[int, int] = 1,
         *,
         rng: np.random.Generator | None = None,
         dtype: Any = DEFAULT_DTYPE,
@@ -490,8 +491,17 @@ class Conv2d(Module):
         )
         self.stride = (stride, stride) if isinstance(stride, int) else tuple(stride)
         self.padding = (padding, padding) if isinstance(padding, int) else tuple(padding)
-        if len(self.kernel_size) != 2 or len(self.stride) != 2 or len(self.padding) != 2:
-            raise ValueError("Conv2d kernel, stride, and padding must have two dimensions")
+        self.dilation = (dilation, dilation) if isinstance(dilation, int) else tuple(dilation)
+        if (
+            len(self.kernel_size) != 2
+            or len(self.stride) != 2
+            or len(self.padding) != 2
+            or len(self.dilation) != 2
+            or any(item < 1 for item in self.dilation)
+        ):
+            raise ValueError(
+                "Conv2d kernel, stride, padding, and dilation must be valid two-dimensional values"
+            )
         generator = rng or np.random.default_rng()
         fan_in = self.in_channels * self.kernel_size[0] * self.kernel_size[1]
         self.weight = Parameter(
@@ -508,16 +518,24 @@ class Conv2d(Module):
             raise ValueError(f"Conv2d expected {self.in_channels} channels, got {channels}")
         padded_height = height + 2 * self.padding[0]
         padded_width = width + 2 * self.padding[1]
-        output_height = (padded_height - self.kernel_size[0]) // self.stride[0] + 1
-        output_width = (padded_width - self.kernel_size[1]) // self.stride[1] + 1
+        output_height = (
+            padded_height - self.dilation[0] * (self.kernel_size[0] - 1) - 1
+        ) // self.stride[0] + 1
+        output_width = (
+            padded_width - self.dilation[1] * (self.kernel_size[1] - 1) - 1
+        ) // self.stride[1] + 1
         if output_height <= 0 or output_width <= 0:
             raise ValueError("Conv2d kernel is larger than the padded input")
         return batch, output_height, output_width, channels
 
     def _columns(self, data: np.ndarray) -> np.ndarray:
         batch, _, height, width = data.shape
-        output_height = (height + 2 * self.padding[0] - self.kernel_size[0]) // self.stride[0] + 1
-        output_width = (width + 2 * self.padding[1] - self.kernel_size[1]) // self.stride[1] + 1
+        output_height = (
+            height + 2 * self.padding[0] - self.dilation[0] * (self.kernel_size[0] - 1) - 1
+        ) // self.stride[0] + 1
+        output_width = (
+            width + 2 * self.padding[1] - self.dilation[1] * (self.kernel_size[1] - 1) - 1
+        ) // self.stride[1] + 1
         padded = np.pad(
             data,
             (
