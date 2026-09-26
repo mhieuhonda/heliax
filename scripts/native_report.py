@@ -71,6 +71,10 @@ def build_report(*, repeats: int = 7) -> dict[str, object]:
             lambda: hx.native_ops.gelu(left),
             lambda: hx.functional.gelu(hx.tensor(left)).numpy(),
         ),
+        "log_softmax_lastdim": (
+            lambda: hx.native_ops.log_softmax_lastdim(logits),
+            lambda: hx.functional.log_softmax(hx.tensor(logits)).numpy(),
+        ),
         "softmax_lastdim": (
             lambda: hx.native_ops.softmax_lastdim(logits),
             lambda: hx.functional.softmax(hx.tensor(logits)).numpy(),

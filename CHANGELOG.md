@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.9 — 2026-09-25
+
+### Added
+
+- Native last-dimension log-softmax kernel with backend dispatch.
+- Native report now covers ten kernels.
+
 ## 0.6.8 — 2026-09-25
 
 ### Added

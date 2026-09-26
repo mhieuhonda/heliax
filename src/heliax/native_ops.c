@@ -135,6 +135,22 @@ void hx_cross_entropy_lastdim(const float *logits, const int64_t *targets,
     *loss = loss_sum * inverse_rows;
 }
 
+void hx_log_softmax_lastdim(const float *x, float *out, size_t rows, size_t cols) {
+    #pragma omp parallel for if (rows > 1)
+    for (size_t row = 0; row < rows; ++row) {
+        const float *src = x + row * cols;
+        float *dst = out + row * cols;
+        float maximum = src[0];
+        for (size_t col = 1; col < cols; ++col) {
+            if (src[col] > maximum) maximum = src[col];
+        }
+        float total = 0.0f;
+        for (size_t col = 0; col < cols; ++col) total += expf(src[col] - maximum);
+        const float log_normalizer = maximum + logf(total);
+        for (size_t col = 0; col < cols; ++col) dst[col] = src[col] - log_normalizer;
+    }
+}
+
 void hx_adamw(float *parameter, const float *gradient, float *first_moment,
               float *second_moment, size_t n, float learning_rate, float beta1,
               float beta2, float epsilon, float weight_decay, float bias1,

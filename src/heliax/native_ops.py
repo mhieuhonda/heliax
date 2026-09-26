@@ -88,6 +88,12 @@ def _load() -> ctypes.CDLL | None:
             ctypes.c_size_t,
             ctypes.c_size_t,
         ]
+        library.hx_log_softmax_lastdim.argtypes = [
+            ctypes.POINTER(ctypes.c_float),
+            ctypes.POINTER(ctypes.c_float),
+            ctypes.c_size_t,
+            ctypes.c_size_t,
+        ]
         library.hx_adamw.argtypes = [
             ctypes.POINTER(ctypes.c_float),
             ctypes.POINTER(ctypes.c_float),
@@ -119,6 +125,7 @@ def _load() -> ctypes.CDLL | None:
             "hx_huber",
             "hx_mse",
             "hx_cross_entropy_lastdim",
+            "hx_log_softmax_lastdim",
             "hx_layernorm_lastdim",
             "hx_adamw",
         ):
@@ -164,6 +171,7 @@ def native_info() -> dict[str, Any]:
             "huber",
             "mse",
             "softmax_lastdim",
+            "log_softmax_lastdim",
             "cross_entropy_lastdim",
             "layernorm_lastdim",
             "adamw",
@@ -325,6 +333,23 @@ def cross_entropy_lastdim(logits: np.ndarray, targets: np.ndarray) -> tuple[floa
         array.shape[-1],
     )
     return float(loss[0]), gradient
+
+
+def log_softmax_lastdim(value: np.ndarray) -> np.ndarray:
+    library = _load()
+    if library is None:
+        raise RuntimeError(_LOAD_ERROR or "native backend unavailable")
+    array = _float32_view(np.asarray(value))
+    if array.ndim < 1 or array.shape[-1] == 0:
+        raise ValueError("log_softmax_lastdim needs a non-empty last dimension")
+    output = np.empty_like(array)
+    library.hx_log_softmax_lastdim(
+        array.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
+        output.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
+        array.size // array.shape[-1],
+        array.shape[-1],
+    )
+    return output
 
 
 def layernorm_lastdim(

@@ -170,6 +170,17 @@ class NumpyBackend:
         return exponent / np.sum(exponent, axis=axis, keepdims=True, dtype=DEFAULT_DTYPE)
 
     def log_softmax(self, value: np.ndarray, axis: int = -1) -> np.ndarray:
+        if (
+            value.ndim >= 1
+            and axis in {-1, value.ndim - 1}
+            and value.dtype == np.float32
+            and native_ops.native_enabled()
+            and native_ops.native_available()
+        ):
+            try:
+                return native_ops.log_softmax_lastdim(value)
+            except RuntimeError:
+                pass
         shifted = value - np.max(value, axis=axis, keepdims=True)
         return shifted - np.log(
             np.sum(
