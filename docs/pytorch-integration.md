@@ -40,7 +40,15 @@ python scripts/build_native.py
 HELIAX_NATIVE=1 python -c 'import heliax as hx; print(hx.native_info())'
 ```
 
-Native dispatch is **not automatic**: it is enabled only with `HELIAX_NATIVE=1`, and the portable NumPy/BLAS path remains the correctness and default reference. Run `python examples/native_benchmark.py` to measure whether a native kernel is actually faster on the target machine. `HELIAX_DISABLE_NATIVE=1` forces the fallback even when a shared library exists.## Optional PyTorch path
+Native dispatch is **not automatic**: it is enabled only with `HELIAX_NATIVE=1`, and the portable NumPy/BLAS path remains the correctness and default reference. Run `python examples/native_benchmark.py` to measure whether a native kernel is actually faster on the target machine. `HELIAX_DISABLE_NATIVE=1` forces the fallback even when a shared library exists.
+
+For a host-tuned multithreaded build, opt in explicitly:
+
+```bash
+HELIAX_NATIVE_OPENMP=1 HELIAX_NATIVE_NATIVE_ARCH=1 python scripts/build_native.py
+```
+
+## Optional PyTorch path
 
 ```bash
 pip install 'heliax[torch]'

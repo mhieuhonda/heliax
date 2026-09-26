@@ -27,6 +27,8 @@ def main() -> None:
         str(output),
         "-lm",
     ]
+    if os.environ.get("HELIAX_NATIVE_OPENMP", "").lower() in {"1", "true", "yes"}:
+        command[1:1] = ["-fopenmp"]
     if os.environ.get("HELIAX_NATIVE_NATIVE_ARCH", "").lower() in {"1", "true", "yes"}:
         command.insert(1, "-march=native")
     print("building:", " ".join(command))

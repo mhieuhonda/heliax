@@ -10,6 +10,8 @@ import numpy as np
 from .nn import Module
 from .optim import Optimizer
 
+FORMAT_VERSION = 1
+
 
 def save_state_dict(path: str | Path, state: dict[str, np.ndarray]) -> Path:
     target = Path(path)
@@ -31,7 +33,8 @@ def save_checkpoint(
     metadata: dict[str, Any] | None = None,
 ) -> Path:
     state: dict[str, np.ndarray] = {
-        f"model.{key}": value for key, value in model.state_dict().items()
+        "format_version": np.asarray(FORMAT_VERSION, dtype=np.int64),
+        **{f"model.{key}": value for key, value in model.state_dict().items()},
     }
     if optimizer is not None:
         for index, values in optimizer.state.items():
@@ -49,6 +52,9 @@ def load_checkpoint(
     path: str | Path, model: Module, optimizer: Optimizer | None = None
 ) -> dict[str, Any]:
     archive = load_state_dict(path)
+    version = int(np.asarray(archive.get("format_version", FORMAT_VERSION)).item())
+    if version != FORMAT_VERSION:
+        raise ValueError(f"unsupported Heliax checkpoint format: {version}")
     model_state = {
         key.removeprefix("model."): archive[key] for key in archive if key.startswith("model.")
     }

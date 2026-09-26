@@ -93,6 +93,8 @@ Build the small dependency-free C library and opt in only after benchmarking it 
 ```bash
 python scripts/build_native.py
 HELIAX_NATIVE=1 python examples/native_benchmark.py
+# optional host-tuned OpenMP build
+HELIAX_NATIVE_OPENMP=1 HELIAX_NATIVE_NATIVE_ARCH=1 python scripts/build_native.py
 ```
 
 Native dispatch is never automatic. The portable NumPy/BLAS path remains the default correctness reference; set `HELIAX_DISABLE_NATIVE=1` to force it.

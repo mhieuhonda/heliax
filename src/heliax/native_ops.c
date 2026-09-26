@@ -18,18 +18,21 @@ static inline float hx_gelu_tanh(float x) {
 }
 
 void hx_add_relu(const float *a, const float *b, float *out, size_t n) {
+    #pragma omp parallel for if (n > 4096)
     for (size_t i = 0; i < n; ++i) {
         out[i] = fmaxf(a[i] + b[i], 0.0f);
     }
 }
 
 void hx_gelu(const float *x, float *out, size_t n) {
+    #pragma omp parallel for if (n > 4096)
     for (size_t i = 0; i < n; ++i) {
         out[i] = hx_gelu_tanh(x[i]);
     }
 }
 
 void hx_softmax_lastdim(const float *x, float *out, size_t rows, size_t cols) {
+    #pragma omp parallel for if (rows > 1)
     for (size_t row = 0; row < rows; ++row) {
         const float *src = x + row * cols;
         float *dst = out + row * cols;
@@ -54,6 +57,7 @@ void hx_adamw(float *parameter, const float *gradient, float *first_moment,
               float bias2) {
     const float one_minus_beta1 = 1.0f - beta1;
     const float one_minus_beta2 = 1.0f - beta2;
+    #pragma omp parallel for if (n > 4096)
     for (size_t i = 0; i < n; ++i) {
         first_moment[i] = beta1 * first_moment[i] + one_minus_beta1 * gradient[i];
         second_moment[i] = beta2 * second_moment[i] + one_minus_beta2 * gradient[i] * gradient[i];
@@ -65,6 +69,7 @@ void hx_adamw(float *parameter, const float *gradient, float *first_moment,
 
 void hx_layernorm_lastdim(const float *x, const float *gamma, const float *beta,
                           float *out, size_t rows, size_t cols, float eps) {
+    #pragma omp parallel for if (rows > 1)
     for (size_t row = 0; row < rows; ++row) {
         const float *src = x + row * cols;
         float *dst = out + row * cols;
