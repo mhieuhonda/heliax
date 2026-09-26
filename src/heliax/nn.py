@@ -673,6 +673,97 @@ class Conv2d(Module):
         return result
 
 
+class Conv1d(Module):
+    """A small im2col 1D convolution for (N, C, L) tensors."""
+
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        kernel_size: int,
+        stride: int = 1,
+        padding: int = 0,
+        dilation: int = 1,
+        bias: bool = True,
+        *,
+        rng: np.random.Generator | None = None,
+        dtype: Any = DEFAULT_DTYPE,
+    ) -> None:
+        super().__init__()
+        if in_channels <= 0 or out_channels <= 0 or kernel_size <= 0 or stride <= 0:
+            raise ValueError("Conv1d dimensions, kernel_size, and stride must be positive")
+        if padding < 0 or dilation <= 0:
+            raise ValueError("Conv1d padding must be non-negative and dilation positive")
+        self.in_channels = int(in_channels)
+        self.out_channels = int(out_channels)
+        self.kernel_size = int(kernel_size)
+        self.stride = int(stride)
+        self.padding = int(padding)
+        self.dilation = int(dilation)
+        generator = rng or np.random.default_rng()
+        fan_in = self.in_channels * self.kernel_size
+        self.weight = Parameter(
+            generator.standard_normal((out_channels, in_channels, kernel_size)).astype(dtype)
+            * dtype(np.sqrt(2.0 / fan_in))
+        )
+        self.bias = Parameter(np.zeros(out_channels, dtype=dtype)) if bias else None
+
+    def _output_length(self, length: int) -> int:
+        return (
+            length + 2 * self.padding - self.dilation * (self.kernel_size - 1) - 1
+        ) // self.stride + 1
+
+    def _columns(self, data: np.ndarray) -> tuple[np.ndarray, int]:
+        batch, channels, length = data.shape
+        if channels != self.in_channels:
+            raise ValueError(f"Conv1d expected {self.in_channels} channels, got {channels}")
+        output_length = self._output_length(length)
+        if output_length <= 0:
+            raise ValueError("Conv1d kernel is larger than the padded input")
+        padded = np.pad(data, ((0, 0), (0, 0), (self.padding, self.padding)))
+        columns = np.empty((batch, channels, self.kernel_size, output_length), dtype=data.dtype)
+        for index in range(self.kernel_size):
+            start = index * self.dilation
+            columns[:, :, index, :] = padded[
+                :, :, start : start + (output_length - 1) * self.stride + 1 : self.stride
+            ]
+        return columns, output_length
+
+    def forward(self, value: Tensor) -> Tensor:
+        if value.ndim != 3:
+            raise ValueError(f"Conv1d expects N x C x L input, got shape {value.shape}")
+        columns, output_length = self._columns(value.numpy())
+        output = np.einsum("oik,nikl->nol", self.weight.numpy(), columns, optimize=True)
+        if self.bias is not None:
+            output = output + self.bias.numpy().reshape(1, -1, 1)
+        parents = (value, self.weight) + ((self.bias,) if self.bias is not None else ())
+        result = value._make(output, parents, lambda: None, "conv1d")
+        if result.requires_grad:
+
+            def run_backward() -> None:
+                grad_output = result.grad.numpy()
+                weight_data = self.weight.numpy()
+                grad_columns = np.einsum("nol,oik->nikl", grad_output, weight_data, optimize=True)
+                grad_weight = np.einsum("nol,nikl->oik", grad_output, columns, optimize=True)
+                grad_padded = np.zeros(
+                    (value.shape[0], self.in_channels, value.shape[2] + 2 * self.padding),
+                    dtype=value.dtype,
+                )
+                for index in range(self.kernel_size):
+                    start = index * self.dilation
+                    grad_padded[
+                        :, :, start : start + (output_length - 1) * self.stride + 1 : self.stride
+                    ] += grad_columns[:, :, index, :]
+                grad_value = grad_padded[:, :, self.padding : self.padding + value.shape[2]]
+                _accumulate(value, grad_value)
+                _accumulate(self.weight, grad_weight)
+                if self.bias is not None:
+                    _accumulate(self.bias, grad_output.sum(axis=(0, 2)))
+
+            result._backward = run_backward
+        return result
+
+
 class MaxPool2d(Module):
     def __init__(
         self,

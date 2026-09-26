@@ -65,6 +65,7 @@ from .nn import (
     AvgPool2d,
     BatchNorm1d,
     BatchNorm2d,
+    Conv1d,
     Conv2d,
     CrossEntropyLoss,
     Dropout,
@@ -151,7 +152,7 @@ from .training import Trainer
 from .workspace import Workspace
 from .workspace import workspace as workspace_context
 
-__version__ = "0.6.23"
+__version__ = "0.6.24"
 
 __all__ = [
     "GELU",
@@ -165,6 +166,7 @@ __all__ = [
     "AvgPool2d",
     "BatchNorm1d",
     "BatchNorm2d",
+    "Conv1d",
     "Conv2d",
     "CosineAnnealingLR",
     "CosineAnnealingWarmRestarts",

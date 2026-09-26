@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.24 — 2026-09-25
+
+### Added
+
+- `Conv1d` im2col layer with stride, padding, dilation, and autograd support.
+- Forward, gradient-check, and dilation regression coverage.
+
 ## 0.6.23 — 2026-09-25
 
 ### Fixed
