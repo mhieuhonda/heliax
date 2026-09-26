@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.5 — 2026-09-25
+
+### Added
+
+- Causal mask helper, differentiable linalg helpers, and half-precision dtype preservation.
+- CI-safe benchmark smoke gate.
+- Additional regression coverage for precision, quantized inference, and convolution paths.
+
 ## 0.3.4 — 2026-09-25
 
 ### Added
