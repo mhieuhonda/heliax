@@ -6,7 +6,7 @@ Heliax is a new, original Python deep-learning library built around a simple pro
 
 Heliax does **not** claim to beat PyTorch on every workload. PyTorch has years of ecosystem investment and a mature CUDA/distributed stack. Heliax is being built as a focused alternative for people who want a readable core, a small dependency surface, and a path toward fused/native kernels.
 
-## What is implemented in 0.3
+## What is implemented in 0.3.7
 
 - N-dimensional `Tensor` with broadcasting, views, dtype conversion, comparisons, and low-allocation in-place operations.
 - Reverse-mode automatic differentiation with graph traversal, gradient accumulation, `no_grad`, `gradcheck`, anomaly detection, and graph release.
@@ -17,7 +17,9 @@ Heliax does **not** claim to beat PyTorch on every workload. PyTorch has years o
 - NPZ state-dict/checkpoint serialization with persistent buffers and a bounded training loop supporting accumulation and schedulers.
 - Optional `TorchAccelerator` interop behind the `torch` extra; PyTorch is never a required dependency.
 - Opt-in C/ctypes native kernels for add+ReLU, GELU, softmax, LayerNorm, and AdamW.
-- Graph/memory diagnostics, `DistributedSampler`, gradient reduction, and fan-aware initialization.
+- Graph/memory diagnostics, `DistributedSampler`, gradient reduction, ModelEMA, and fan-aware initialization.
+- Activation checkpointing, causal masks, linalg helpers, and explicit `autocast`/`GradScaler` policies.
+- QuantizedLinear inference, fused cross-entropy, and CI-safe benchmark smoke gates.
 - A `helianthus` compatibility namespace re-exports the same core.
 - A pinned, license-preserving PyTorch reference snapshot under `third_party/pytorch/`.
 - Backend registry and environment reporting. NumPy is the default; native dispatch requires an explicit opt-in and benchmark.
@@ -127,8 +129,12 @@ heliax/
 │   ├── functional.py   # differentiable math and losses
 │   ├── nn.py           # Module and neural building blocks
 │   ├── optim.py        # optimizers and schedulers
-│   ├── data.py         # batching and seed utilities
-│   ├── profiler.py     # lightweight operation profiler
+│   ├── data.py         # batching, prefetch, distributed sampler
+│   ├── distributed.py  # data-parallel helpers
+│   ├── initialization.py # fan-aware initializers
+│   ├── precision.py    # autocast policy and GradScaler
+│   ├── profiler.py     # graph/memory/model diagnostics
+│   ├── native_ops.py   # opt-in ctypes native kernels
 │   ├── torch_interop.py # optional PyTorch accelerator facade
 │   └── serialization.py
 ├── src/helianthus/     # compatibility namespace

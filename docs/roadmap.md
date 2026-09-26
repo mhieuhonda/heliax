@@ -24,12 +24,20 @@
 - Gradient accumulation, schedulers, Adagrad, bounded fit loop, distributed sampler
 - Fan-aware initialization, extra losses, and broader edge-case tests
 
+## v0.3.7 — memory-aware training
+
+- Activation checkpointing with backward recomputation
+- QuantizedLinear inference and half-precision dtype preservation
+- Causal masks, linalg helpers, ModelEMA, GradScaler, and CI benchmark gate
+- Shape-operation autograd coverage
+
 ## v0.4 — memory and kernels
 
 - Strided/contiguous layout policies and reusable workspace buffers
 - More fused forward/backward kernels with benchmark gates
 - Optional quantized inference modules
 - Better mixed-precision scaffolding and dtype policies
+- Native backend packaging and per-platform artifact matrix
 
 ## v1.0 — ecosystem depth
 
