@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.6 — 2026-09-25
+
+### Added
+
+- Differentiable `expand`, `repeat`, `roll`, `squeeze`, and `unsqueeze` tensor operations.
+- Additional shape-operation gradient regression coverage.
+
 ## 0.3.5 — 2026-09-25
 
 ### Added
