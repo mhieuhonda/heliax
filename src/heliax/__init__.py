@@ -16,7 +16,7 @@ from . import (
     serialization,
     torch_interop,
 )
-from .autograd import gradcheck
+from .autograd import checkpoint, gradcheck
 from .backend import available_backends, backend_info, get_backend, set_backend
 from .data import DataLoader, PrefetchLoader, TensorDataset, fit, seed_everything
 from .distributed import DistributedSampler, reduce_gradients
@@ -136,7 +136,7 @@ from .tensor import (
 )
 from .torch_interop import TorchAccelerator, from_torch, to_torch, torch_available, torch_version
 
-__version__ = "0.3.6"
+__version__ = "0.3.7"
 
 __all__ = [
     "GELU",
@@ -201,6 +201,7 @@ __all__ = [
     "backend_info",
     "binary_cross_entropy",
     "causal_mask",
+    "checkpoint",
     "clip",
     "clip_grad_norm_",
     "compression_ratio",

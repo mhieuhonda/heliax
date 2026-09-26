@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.7 — 2026-09-25
+
+### Added
+
+- Activation checkpointing for compute/memory tradeoffs.
+- Additional gradient replay and shape-operation coverage.
+
 ## 0.3.6 — 2026-09-25
 
 ### Added

@@ -65,3 +65,27 @@ def gradcheck(
             <= atol + rtol * max((float(np.max(np.abs(value))) for value in numerical), default=0.0)
         ),
     }
+
+
+def checkpoint(function: Callable[..., Tensor], *args: Tensor, **kwargs: Any) -> Tensor:
+    """Trade compute for memory by recomputing a function during backward."""
+
+    requires_grad = any(isinstance(value, Tensor) and value.requires_grad for value in args)
+    with no_grad():
+        forward = function(*args, **kwargs)
+    if not isinstance(forward, Tensor):
+        raise TypeError("checkpointed functions must return a Tensor")
+    result = Tensor(forward.numpy().copy(), requires_grad=requires_grad)
+
+    if requires_grad:
+
+        def run_backward() -> None:
+            from .tensor import enable_grad
+
+            with enable_grad():
+                recomputed = function(*args, **kwargs)
+                recomputed.backward(result.grad.numpy())
+
+        result._backward = run_backward
+        result._op = "checkpoint"
+    return result
