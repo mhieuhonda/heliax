@@ -72,6 +72,19 @@ def test_native_kernels_match_numpy_reference():
     )
     assert np.all(parameter < 1.0)
     assert np.all(first > 0.0) and np.all(second > 0.0)
+    rms_parameter = np.ones(5, dtype=np.float32)
+    rms_gradient = np.arange(1, 6, dtype=np.float32)
+    rms_average = np.zeros(5, dtype=np.float32)
+    hx.native_ops.rmsprop(
+        rms_parameter,
+        rms_gradient,
+        rms_average,
+        learning_rate=0.01,
+        decay=0.9,
+        epsilon=1e-8,
+    )
+    assert np.all(rms_parameter < 1.0)
+    assert np.all(rms_average > 0.0)
     mae_prediction = rng.normal(size=(4, 5)).astype(np.float32)
     mae_target = rng.normal(size=(4, 5)).astype(np.float32)
     mae_loss, mae_gradient = hx.native_ops.mae(mae_prediction, mae_target)

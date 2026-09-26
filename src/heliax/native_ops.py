@@ -58,6 +58,15 @@ def _load() -> ctypes.CDLL | None:
             ctypes.c_size_t,
             ctypes.c_size_t,
         ]
+        library.hx_rmsprop.argtypes = [
+            ctypes.POINTER(ctypes.c_float),
+            ctypes.POINTER(ctypes.c_float),
+            ctypes.POINTER(ctypes.c_float),
+            ctypes.c_size_t,
+            ctypes.c_float,
+            ctypes.c_float,
+            ctypes.c_float,
+        ]
         library.hx_silu.argtypes = [
             ctypes.POINTER(ctypes.c_float),
             ctypes.POINTER(ctypes.c_float),
@@ -133,6 +142,7 @@ def _load() -> ctypes.CDLL | None:
             "hx_add_relu",
             "hx_gelu",
             "hx_softmax_lastdim",
+            "hx_rmsprop",
             "hx_silu",
             "hx_mae",
             "hx_bce_with_logits",
@@ -181,6 +191,7 @@ def native_info() -> dict[str, Any]:
         "kernels": [
             "add_relu",
             "gelu",
+            "rmsprop",
             "silu",
             "mae",
             "bce_with_logits",
@@ -217,6 +228,33 @@ def add_relu(left: np.ndarray, right: np.ndarray) -> np.ndarray:
         output.size,
     )
     return output
+
+
+def rmsprop(
+    parameter: np.ndarray,
+    gradient: np.ndarray,
+    square_average: np.ndarray,
+    *,
+    learning_rate: float,
+    decay: float,
+    epsilon: float,
+) -> None:
+    library = _load()
+    if library is None:
+        raise RuntimeError(_LOAD_ERROR or "native backend unavailable")
+    arrays = [_float32_view(np.asarray(item)) for item in (parameter, gradient, square_average)]
+    if any(item.shape != arrays[0].shape for item in arrays):
+        raise ValueError("rmsprop operands must have identical shapes")
+    param, grad, average = arrays
+    library.hx_rmsprop(
+        param.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
+        grad.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
+        average.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
+        param.size,
+        ctypes.c_float(learning_rate),
+        ctypes.c_float(decay),
+        ctypes.c_float(epsilon),
+    )
 
 
 def silu(value: np.ndarray) -> np.ndarray:

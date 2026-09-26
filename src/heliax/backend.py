@@ -314,6 +314,23 @@ class NumpyBackend:
         decay: float,
         epsilon: float,
     ) -> None:
+        if (
+            parameter.dtype == np.float32
+            and native_ops.native_enabled()
+            and native_ops.native_available()
+        ):
+            try:
+                native_ops.rmsprop(
+                    parameter,
+                    gradient,
+                    square_average,
+                    learning_rate=learning_rate,
+                    decay=decay,
+                    epsilon=epsilon,
+                )
+                return
+            except RuntimeError:
+                pass
         square_average *= decay
         square_average += (1.0 - decay) * (gradient * gradient)
         parameter -= learning_rate * gradient / (np.sqrt(square_average) + epsilon)

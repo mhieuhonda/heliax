@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.19 — 2026-09-25
+
+### Added
+
+- Native RMSProp update kernel with backend dispatch.
+- Native report now covers thirteen kernels.
+
 ## 0.6.18 — 2026-09-25
 
 ### Added

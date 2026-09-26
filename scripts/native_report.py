@@ -25,6 +25,12 @@ def _time(function, *, warmup: int = 2, repeats: int = 7) -> float:
     return float(np.median(samples))
 
 
+def _portable_rmsprop(parameter: np.ndarray, gradient: np.ndarray, average: np.ndarray) -> None:
+    average *= 0.9
+    average += 0.1 * gradient * gradient
+    parameter -= 0.001 * gradient / (np.sqrt(average) + 1e-8)
+
+
 def build_report(*, repeats: int = 7) -> dict[str, object]:
     generator = np.random.default_rng(0)
     left = generator.normal(size=(256, 256)).astype(np.float32)
@@ -48,7 +54,21 @@ def build_report(*, repeats: int = 7) -> dict[str, object]:
     target_values = generator.normal(size=(128, 16)).astype(np.float32)
     bce_logits = generator.normal(size=(128, 16)).astype(np.float32)
     bce_targets = generator.integers(0, 2, size=(128, 16)).astype(np.float32)
+    rms_parameter = np.ones(4096, dtype=np.float32)
+    rms_gradient = np.linspace(-1.0, 1.0, 4096, dtype=np.float32)
+    rms_average = np.zeros(4096, dtype=np.float32)
     cases = {
+        "rmsprop": (
+            lambda: hx.native_ops.rmsprop(
+                rms_parameter,
+                rms_gradient,
+                rms_average,
+                learning_rate=0.001,
+                decay=0.9,
+                epsilon=1e-8,
+            ),
+            lambda: _portable_rmsprop(rms_parameter, rms_gradient, rms_average),
+        ),
         "mae": (
             lambda: hx.native_ops.mae(prediction, target_values),
             lambda: hx.functional.mean_absolute_error(hx.tensor(prediction), target_values).numpy(),
