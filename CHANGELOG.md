@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.4 — 2026-09-25
+
+### Fixed
+
+- Tensor and fused-linear matmul now dispatch through the active numerical backend.
+- Verified Torch backend and interop paths remain optional and explicit.
+
 ## 0.4.3 — 2026-09-25
 
 ### Added
