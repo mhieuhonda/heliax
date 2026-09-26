@@ -155,7 +155,7 @@ from .training import CheckpointManager, Trainer
 from .workspace import Workspace
 from .workspace import workspace as workspace_context
 
-__version__ = "0.6.30"
+__version__ = "0.6.31"
 
 __all__ = [
     "GELU",

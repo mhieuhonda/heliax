@@ -634,6 +634,40 @@ class Tensor:
             result._backward = run_backward
         return result
 
+    def unbind(self, axis: int = 0) -> list[Tensor]:
+        if not self.shape:
+            raise ValueError("cannot unbind a scalar tensor")
+        normalized_axis = axis if axis >= 0 else axis + self.ndim
+        if normalized_axis < 0 or normalized_axis >= self.ndim:
+            raise ValueError("unbind axis is out of range")
+        outputs = []
+        for index in range(self.shape[normalized_axis]):
+            output = self._make(
+                np.take(self._data, index, axis=normalized_axis), (self,), lambda: None, "unbind"
+            )
+            if output.requires_grad:
+
+                def run_backward(output=output, index=index) -> None:
+                    gradient = np.zeros_like(self._data)
+                    key = [slice(None)] * self.ndim
+                    key[normalized_axis] = index
+                    gradient[tuple(key)] = output.grad.numpy()
+                    _accumulate(self, gradient)
+
+                output._backward = run_backward
+            outputs.append(output)
+        return outputs
+
+    def chunk(self, count: int, axis: int = 0) -> list[Tensor]:
+        if count <= 0:
+            raise ValueError("chunk count must be positive")
+        if not self.shape:
+            return [self.clone() for _ in range(count)]
+        size = self.shape[axis] if axis >= 0 else self.shape[axis + self.ndim]
+        base, remainder = divmod(size, count)
+        sections = [base + (1 if index < remainder else 0) for index in range(count)]
+        return self.split(sections, axis=axis)
+
     def split(self, split_size_or_sections: int | Sequence[int], axis: int = 0) -> list[Tensor]:
         if not self.shape:
             raise ValueError("cannot split a scalar tensor")

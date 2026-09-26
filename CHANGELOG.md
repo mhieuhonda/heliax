@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.31 — 2026-09-25
+
+### Added
+
+- Differentiable `Tensor.unbind` and `Tensor.chunk` view helpers.
+- Shape and gradient regression coverage for unbound/chunked tensors.
+
 ## 0.6.30 — 2026-09-25
 
 ### Added
