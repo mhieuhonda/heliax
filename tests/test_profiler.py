@@ -15,3 +15,5 @@ def test_graph_summary_and_memory_report():
     assert report["parameters"] == 10
     assert report["parameter_bytes"] > 0
     assert hx.memory_bytes(model.weight) == 4 * 2 * np.dtype(np.float32).itemsize
+    summary = hx.model_summary(model)
+    assert {row["name"] for row in summary} == {"weight", "bias"}

@@ -85,6 +85,23 @@ def memory_report(module: object) -> dict[str, int]:
     }
 
 
+def model_summary(module: object) -> list[dict[str, object]]:
+    """Return a compact per-parameter summary for reports and logs."""
+
+    parameters = getattr(module, "named_parameters", None)
+    if not callable(parameters):
+        raise TypeError("model_summary expects a Module with named_parameters()")
+    return [
+        {
+            "name": name,
+            "shape": tuple(parameter.shape),
+            "dtype": str(parameter.dtype),
+            "elements": parameter.size,
+        }
+        for name, parameter in parameters()
+    ]
+
+
 def op_histogram(tensor: Tensor) -> dict[str, int]:
     """Return counts of operation names reachable from ``tensor``."""
 

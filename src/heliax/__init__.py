@@ -97,6 +97,7 @@ from .profiler import (
     graph_summary,
     memory_bytes,
     memory_report,
+    model_summary,
     op_histogram,
     profile,
 )
@@ -224,6 +225,7 @@ __all__ = [
     "mean_squared_error",
     "memory_bytes",
     "memory_report",
+    "model_summary",
     "native_available",
     "native_info",
     "native_ops",
