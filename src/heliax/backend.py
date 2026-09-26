@@ -156,14 +156,15 @@ class NumpyBackend:
     def softmax(self, value: np.ndarray, axis: int = -1) -> np.ndarray:
         if (
             value.ndim >= 1
-            and axis in {-1, value.ndim - 1}
             and value.dtype == np.float32
             and native_ops.native_enabled()
             and native_ops.native_available()
         ):
             try:
-                return native_ops.softmax_lastdim(value)
-            except RuntimeError:
+                moved = np.moveaxis(value, axis, -1)
+                result = native_ops.softmax_lastdim(np.ascontiguousarray(moved))
+                return np.moveaxis(result, -1, axis)
+            except (RuntimeError, ValueError):
                 pass
         shifted = value - np.max(value, axis=axis, keepdims=True)
         exponent = np.exp(shifted, dtype=DEFAULT_DTYPE)

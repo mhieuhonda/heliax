@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.12 — 2026-09-25
+
+### Fixed
+
+- Native softmax dispatch now supports arbitrary axes through moveaxis.
+- Added arbitrary-axis native softmax regression coverage.
+
 ## 0.6.11 — 2026-09-25
 
 ### Added
