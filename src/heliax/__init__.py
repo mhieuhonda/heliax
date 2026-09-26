@@ -10,6 +10,7 @@ from . import (
     native_ops,
     nn,
     optim,
+    precision,
     profiler,
     quantization,
     serialization,
@@ -93,6 +94,7 @@ from .optim import (
     StepLR,
     clip_grad_norm_,
 )
+from .precision import GradScaler, autocast
 from .profiler import (
     ProfileResult,
     count_parameters,
@@ -154,6 +156,7 @@ __all__ = [
     "ExponentialLR",
     "Flatten",
     "FusedLinearGELU",
+    "GradScaler",
     "GroupNorm",
     "GroupedConv2d",
     "LayerNorm",
@@ -186,6 +189,7 @@ __all__ = [
     "add_relu",
     "anomaly_detection",
     "arange",
+    "autocast",
     "autograd",
     "available_backends",
     "backend",
@@ -240,6 +244,7 @@ __all__ = [
     "ones_",
     "op_histogram",
     "optim",
+    "precision",
     "profile",
     "profiler",
     "quantization",
