@@ -56,6 +56,16 @@ def test_native_kernels_match_numpy_reference():
     )
     assert np.all(parameter < 1.0)
     assert np.all(first > 0.0) and np.all(second > 0.0)
+    bce_logits = rng.normal(size=(4, 5)).astype(np.float32)
+    bce_targets = rng.integers(0, 2, size=(4, 5)).astype(np.float32)
+    bce_loss, bce_gradient = hx.native_ops.bce_with_logits(bce_logits, bce_targets)
+    bce_reference = (
+        np.maximum(bce_logits, 0) - bce_logits * bce_targets + np.log1p(np.exp(-np.abs(bce_logits)))
+    )
+    assert np.allclose(bce_loss, float(bce_reference.mean()), atol=1e-5)
+    assert np.allclose(
+        bce_gradient, (1.0 / (1.0 + np.exp(-bce_logits)) - bce_targets) / 20, atol=1e-5
+    )
     prediction = rng.normal(size=(4, 5)).astype(np.float32)
     target_values = rng.normal(size=(4, 5)).astype(np.float32)
     huber_loss, huber_gradient = hx.native_ops.huber(prediction, target_values, delta=0.75)

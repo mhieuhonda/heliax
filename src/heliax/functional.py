@@ -332,6 +332,24 @@ def binary_cross_entropy(logits: Tensor, target: Any, from_logits: bool = True) 
         target.numpy() if isinstance(target, Tensor) else np.asarray(target, dtype=logits.dtype)
     )
     data = logits.numpy()
+    if from_logits and logits._data.dtype == np.float32:
+        from . import native_ops
+
+        if native_ops.native_enabled() and native_ops.native_available():
+            native_loss, native_gradient = native_ops.bce_with_logits(data, target_data)
+            output = logits._make(
+                np.asarray(native_loss, dtype=logits.dtype),
+                (logits,),
+                lambda: None,
+                "binary_cross_entropy",
+            )
+            if output.requires_grad:
+
+                def run_backward() -> None:
+                    _accumulate(logits, native_gradient)
+
+                output._backward = run_backward
+            return output
     if from_logits:
         loss_data = np.maximum(data, 0) - data * target_data + np.log1p(np.exp(-np.abs(data)))
         derivative = 1.0 / (1.0 + np.exp(-data)) - target_data

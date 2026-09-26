@@ -46,7 +46,13 @@ def build_report(*, repeats: int = 7) -> dict[str, object]:
         return report
     prediction = generator.normal(size=(128, 16)).astype(np.float32)
     target_values = generator.normal(size=(128, 16)).astype(np.float32)
+    bce_logits = generator.normal(size=(128, 16)).astype(np.float32)
+    bce_targets = generator.integers(0, 2, size=(128, 16)).astype(np.float32)
     cases = {
+        "bce_with_logits": (
+            lambda: hx.native_ops.bce_with_logits(bce_logits, bce_targets),
+            lambda: hx.functional.binary_cross_entropy(hx.tensor(bce_logits), bce_targets).numpy(),
+        ),
         "huber": (
             lambda: hx.native_ops.huber(prediction, target_values, delta=0.75),
             lambda: hx.functional.huber_loss(

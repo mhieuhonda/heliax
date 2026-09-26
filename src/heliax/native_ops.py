@@ -58,6 +58,13 @@ def _load() -> ctypes.CDLL | None:
             ctypes.c_size_t,
             ctypes.c_size_t,
         ]
+        library.hx_bce_with_logits.argtypes = [
+            ctypes.POINTER(ctypes.c_float),
+            ctypes.POINTER(ctypes.c_float),
+            ctypes.POINTER(ctypes.c_float),
+            ctypes.POINTER(ctypes.c_float),
+            ctypes.c_size_t,
+        ]
         library.hx_huber.argtypes = [
             ctypes.POINTER(ctypes.c_float),
             ctypes.POINTER(ctypes.c_float),
@@ -108,6 +115,7 @@ def _load() -> ctypes.CDLL | None:
             "hx_add_relu",
             "hx_gelu",
             "hx_softmax_lastdim",
+            "hx_bce_with_logits",
             "hx_huber",
             "hx_mse",
             "hx_cross_entropy_lastdim",
@@ -152,6 +160,7 @@ def native_info() -> dict[str, Any]:
         "kernels": [
             "add_relu",
             "gelu",
+            "bce_with_logits",
             "huber",
             "mse",
             "softmax_lastdim",
@@ -215,6 +224,30 @@ def softmax_lastdim(value: np.ndarray) -> np.ndarray:
         array.shape[-1],
     )
     return output
+
+
+def bce_with_logits(logits: np.ndarray, target: np.ndarray) -> tuple[float, np.ndarray]:
+    library = _load()
+    if library is None:
+        raise RuntimeError(_LOAD_ERROR or "native backend unavailable")
+    logits_input = np.asarray(logits)
+    target_input = np.asarray(target)
+    try:
+        result_shape = np.broadcast_shapes(logits_input.shape, target_input.shape)
+    except ValueError as error:
+        raise ValueError("BCE operands are not broadcastable") from error
+    logit_array = _float32_view(np.broadcast_to(logits_input, result_shape))
+    target_array = _float32_view(np.broadcast_to(target_input, result_shape))
+    loss = np.zeros(1, dtype=np.float32)
+    gradient = np.empty_like(logit_array)
+    library.hx_bce_with_logits(
+        logit_array.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
+        target_array.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
+        loss.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
+        gradient.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
+        logit_array.size,
+    )
+    return float(loss[0]), gradient
 
 
 def huber(

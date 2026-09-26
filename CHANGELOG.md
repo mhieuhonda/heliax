@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.8 — 2026-09-25
+
+### Added
+
+- Native fused BCE-with-logits kernel with broadcast-aware targets and fused gradients.
+- Native report now covers nine kernels.
+
 ## 0.6.7 — 2026-09-25
 
 ### Added
