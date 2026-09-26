@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 import heliax as hx
 
@@ -48,7 +49,13 @@ def test_rich_checkpoint_metadata_round_trip(tmp_path):
     assert restored["epoch"] == 2
 
 
-def test_non_strict_state_dict_loading():
+def test_state_dict_rejects_shape_mismatch():
+    model = hx.nn.Linear(2, 1, rng=np.random.default_rng(5))
+    with pytest.raises(ValueError, match="shape mismatch"):
+        model.load_state_dict(
+            {"weight": np.zeros((1, 3), dtype=np.float32), "bias": np.zeros(1, dtype=np.float32)}
+        )
+
     model = hx.nn.Sequential(hx.nn.Linear(2, 2, rng=np.random.default_rng(1)), hx.nn.ReLU())
     state = {"layers.0.bias": np.ones(2, dtype=np.float32)}
     model.load_state_dict(state, strict=False)

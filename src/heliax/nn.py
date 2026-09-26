@@ -103,11 +103,21 @@ class Module:
             )
         for name, parameter in self.named_parameters():
             if name in state:
-                parameter.data = np.asarray(state[name])
+                value = np.asarray(state[name])
+                if value.shape != parameter.shape:
+                    raise ValueError(
+                        f"state_dict shape mismatch for {name}: {value.shape} != {parameter.shape}"
+                    )
+                parameter.data = value
         buffers = dict(self.named_buffers())
         for name, target in buffers.items():
             if name in state:
-                target[...] = np.asarray(state[name])
+                value = np.asarray(state[name])
+                if value.shape != target.shape:
+                    raise ValueError(
+                        f"state_dict shape mismatch for {name}: {value.shape} != {target.shape}"
+                    )
+                target[...] = value
 
     def train(self, mode: bool = True) -> Module:
         self.training = mode

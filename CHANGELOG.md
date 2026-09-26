@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.28 — 2026-09-25
+
+### Fixed
+
+- Validate parameter and buffer shapes during state-dict loading.
+- Added regression coverage for shape-mismatched checkpoints.
+
 ## 0.6.27 — 2026-09-25
 
 ### Added
