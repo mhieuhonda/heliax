@@ -316,6 +316,10 @@ def register_backend(name: str, backend: NumpyBackend) -> None:
 
 def set_backend(name: str) -> None:
     global _ACTIVE_BACKEND
+    if name == "torch" and name not in _BACKENDS:
+        from .torch_backend import get_torch_backend
+
+        register_backend(name, get_torch_backend())
     if name not in _BACKENDS:
         raise KeyError(f"Unknown Heliax backend: {name}")
     _ACTIVE_BACKEND = name

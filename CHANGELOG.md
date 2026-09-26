@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.1 — 2026-09-25
+
+### Added
+
+- Explicit opt-in TorchBackend numerical dispatch with tests.
+- Validated CPU PyTorch backend and interop paths.
+
 ## 0.4.0 — 2026-09-25
 
 ### Added

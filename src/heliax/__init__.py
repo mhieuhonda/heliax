@@ -15,6 +15,7 @@ from . import (
     profiler,
     quantization,
     serialization,
+    torch_backend,
     torch_interop,
 )
 from .autograd import checkpoint, gradcheck
@@ -136,9 +137,10 @@ from .tensor import (
     tensor,
     zeros,
 )
+from .torch_backend import TorchBackend, get_torch_backend, torch_backend_available
 from .torch_interop import TorchAccelerator, from_torch, to_torch, torch_available, torch_version
 
-__version__ = "0.4.0"
+__version__ = "0.4.1"
 
 __all__ = [
     "GELU",
@@ -191,6 +193,7 @@ __all__ = [
     "Tensor",
     "TensorDataset",
     "TorchAccelerator",
+    "TorchBackend",
     "TransformerEncoder",
     "TransformerEncoderLayer",
     "add_relu",
@@ -230,6 +233,7 @@ __all__ = [
     "fused_linear_gelu",
     "gelu",
     "get_backend",
+    "get_torch_backend",
     "gradcheck",
     "graph_summary",
     "huber_loss",
@@ -283,6 +287,8 @@ __all__ = [
     "time_callable",
     "to_torch",
     "torch_available",
+    "torch_backend",
+    "torch_backend_available",
     "torch_interop",
     "torch_version",
     "uniform_",

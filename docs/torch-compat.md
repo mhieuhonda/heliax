@@ -1,13 +1,20 @@
 # PyTorch compatibility notes
 
-Heliax keeps PyTorch optional. The `torch` extra enables explicit conversion and the `TorchAccelerator` facade; it never changes the default Heliax backend.
+Heliax keeps PyTorch optional. The `torch` extra enables explicit conversion, the `TorchAccelerator` facade, and an opt-in `torch` numerical backend; it never changes the default Heliax backend.
+
+```python
+import heliax as hx
+
+hx.set_backend("torch")       # explicit, never automatic
+print(hx.backend_info())
+```
 
 ## Validated smoke path
 
 In an isolated CPU environment, the following passed:
 
 ```text
-python -m pytest -q tests/test_torch_interop.py
+python -m pytest -q tests/test_torch_backend.py tests/test_torch_interop.py
 python scripts/compare_torch.py
 ```
 
