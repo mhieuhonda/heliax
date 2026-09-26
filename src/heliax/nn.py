@@ -10,6 +10,7 @@ import numpy as np
 from . import functional as F
 from .backend import DEFAULT_DTYPE, get_backend
 from .tensor import Parameter, Tensor, _accumulate, _normalize_device, zeros
+from .workspace import Workspace
 
 
 class Module:
@@ -509,6 +510,7 @@ class Conv2d(Module):
         self.stride = (stride, stride) if isinstance(stride, int) else tuple(stride)
         self.padding = (padding, padding) if isinstance(padding, int) else tuple(padding)
         self.dilation = (dilation, dilation) if isinstance(dilation, int) else tuple(dilation)
+        self._workspace = Workspace()
         if (
             len(self.kernel_size) != 2
             or len(self.stride) != 2
@@ -562,7 +564,7 @@ class Conv2d(Module):
                 (self.padding[1], self.padding[1]),
             ),
         )
-        columns = np.empty(
+        columns = self._workspace.acquire(
             (
                 batch,
                 self.in_channels,
@@ -597,6 +599,7 @@ class Conv2d(Module):
             .reshape(self.out_channels, batch, output_height, output_width)
             .transpose(1, 0, 2, 3)
         )
+        self._workspace.release(columns.base if columns.base is not None else columns)
         if self.bias is not None:
             output = output + self.bias.reshape(1, -1, 1, 1)
         parents = (value, self.weight) + ((self.bias,) if self.bias is not None else ())
@@ -610,6 +613,9 @@ class Conv2d(Module):
                 weight_flat = self.weight.numpy().reshape(self.out_channels, -1)
                 grad_weight = np.einsum("obl,bfl->of", grad_output, current_columns).reshape(
                     self.weight.shape
+                )
+                self._workspace.release(
+                    current_columns.base if current_columns.base is not None else current_columns
                 )
                 grad_columns = np.einsum("obl,of->bfl", grad_output, weight_flat).reshape(
                     batch,

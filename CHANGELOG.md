@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.1 — 2026-09-25
+
+### Added
+
+- Bounded shape/dtype workspace buffer pool with hit/miss reporting.
+- Conv2d im2col scratch buffers now reuse pooled workspace storage in forward and backward.
+
 ## 0.6.0 — 2026-09-25
 
 ### Added

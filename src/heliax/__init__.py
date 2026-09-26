@@ -18,6 +18,7 @@ from . import (
     torch_backend,
     torch_interop,
     training,
+    workspace,
 )
 from .autograd import checkpoint, gradcheck
 from .autotune import autotune_report, select_fastest, time_callable
@@ -144,8 +145,10 @@ from .tensor import (
 from .torch_backend import TorchBackend, get_torch_backend, torch_backend_available
 from .torch_interop import TorchAccelerator, from_torch, to_torch, torch_available, torch_version
 from .training import Trainer
+from .workspace import Workspace
+from .workspace import workspace as workspace_context
 
-__version__ = "0.6.0"
+__version__ = "0.6.1"
 
 __all__ = [
     "GELU",
@@ -202,6 +205,7 @@ __all__ = [
     "Trainer",
     "TransformerEncoder",
     "TransformerEncoderLayer",
+    "Workspace",
     "add_relu",
     "anomaly_detection",
     "arange",
@@ -303,6 +307,8 @@ __all__ = [
     "training_memory_report",
     "uniform_",
     "where",
+    "workspace",
+    "workspace_context",
     "xavier_uniform_",
     "zeros",
     "zeros_",
