@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.6 — 2026-09-25
+
+### Added
+
+- Native fused MSE kernel with broadcast-aware target handling.
+- MSE native report coverage and backward autograd path.
+
 ## 0.6.5 — 2026-09-25
 
 ### Added

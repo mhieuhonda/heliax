@@ -44,7 +44,13 @@ def build_report(*, repeats: int = 7) -> dict[str, object]:
     }
     if not hx.native_available():
         return report
+    prediction = generator.normal(size=(128, 16)).astype(np.float32)
+    target_values = generator.normal(size=(128, 16)).astype(np.float32)
     cases = {
+        "mse": (
+            lambda: hx.native_ops.mse(prediction, target_values),
+            lambda: hx.functional.mean_squared_error(hx.tensor(prediction), target_values).numpy(),
+        ),
         "add_relu": (
             lambda: hx.native_ops.add_relu(left, right),
             lambda: np.maximum(left + right, 0.0),

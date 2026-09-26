@@ -273,6 +273,24 @@ def mean_squared_error(prediction: Tensor, target: Any) -> Tensor:
     target_data = (
         target.numpy() if isinstance(target, Tensor) else np.asarray(target, dtype=prediction.dtype)
     )
+    if prediction._data.dtype == np.float32:
+        from . import native_ops
+
+        if native_ops.native_enabled() and native_ops.native_available():
+            native_loss, native_gradient = native_ops.mse(prediction.numpy(), target_data)
+            output = prediction._make(
+                np.asarray(native_loss, dtype=prediction.dtype),
+                (prediction,),
+                lambda: None,
+                "mean_squared_error",
+            )
+            if output.requires_grad:
+
+                def run_backward() -> None:
+                    _accumulate(prediction, native_gradient)
+
+                output._backward = run_backward
+            return output
     return (prediction - target_data).square().mean()
 
 

@@ -56,6 +56,12 @@ def test_native_kernels_match_numpy_reference():
     )
     assert np.all(parameter < 1.0)
     assert np.all(first > 0.0) and np.all(second > 0.0)
+    prediction = rng.normal(size=(4, 5)).astype(np.float32)
+    target_values = rng.normal(size=(4, 5)).astype(np.float32)
+    mse_loss, mse_gradient = hx.native_ops.mse(prediction, target_values)
+    difference = prediction - target_values
+    assert np.allclose(mse_loss, float(np.mean(difference**2)), atol=1e-5)
+    assert np.allclose(mse_gradient, 2.0 * difference / 20, atol=1e-5)
     targets = np.array([0, 2, 4, 1, 3], dtype=np.int64)
     logits = rng.normal(size=(5, 5)).astype(np.float32)
     loss, gradient = hx.native_ops.cross_entropy_lastdim(logits, targets)

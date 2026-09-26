@@ -58,6 +58,13 @@ def _load() -> ctypes.CDLL | None:
             ctypes.c_size_t,
             ctypes.c_size_t,
         ]
+        library.hx_mse.argtypes = [
+            ctypes.POINTER(ctypes.c_float),
+            ctypes.POINTER(ctypes.c_float),
+            ctypes.POINTER(ctypes.c_float),
+            ctypes.POINTER(ctypes.c_float),
+            ctypes.c_size_t,
+        ]
         library.hx_cross_entropy_lastdim.argtypes = [
             ctypes.POINTER(ctypes.c_float),
             ctypes.POINTER(ctypes.c_int64),
@@ -93,6 +100,7 @@ def _load() -> ctypes.CDLL | None:
             "hx_add_relu",
             "hx_gelu",
             "hx_softmax_lastdim",
+            "hx_mse",
             "hx_cross_entropy_lastdim",
             "hx_layernorm_lastdim",
             "hx_adamw",
@@ -135,6 +143,7 @@ def native_info() -> dict[str, Any]:
         "kernels": [
             "add_relu",
             "gelu",
+            "mse",
             "softmax_lastdim",
             "cross_entropy_lastdim",
             "layernorm_lastdim",
@@ -196,6 +205,30 @@ def softmax_lastdim(value: np.ndarray) -> np.ndarray:
         array.shape[-1],
     )
     return output
+
+
+def mse(prediction: np.ndarray, target: np.ndarray) -> tuple[float, np.ndarray]:
+    library = _load()
+    if library is None:
+        raise RuntimeError(_LOAD_ERROR or "native backend unavailable")
+    pred_input = np.asarray(prediction)
+    target_input = np.asarray(target)
+    try:
+        result_shape = np.broadcast_shapes(pred_input.shape, target_input.shape)
+    except ValueError as error:
+        raise ValueError("mse operands are not broadcastable") from error
+    pred = _float32_view(np.broadcast_to(pred_input, result_shape))
+    target_array = _float32_view(np.broadcast_to(target_input, result_shape))
+    loss = np.zeros(1, dtype=np.float32)
+    gradient = np.empty_like(pred)
+    library.hx_mse(
+        pred.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
+        target_array.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
+        loss.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
+        gradient.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
+        pred.size,
+    )
+    return float(loss[0]), gradient
 
 
 def cross_entropy_lastdim(logits: np.ndarray, targets: np.ndarray) -> tuple[float, np.ndarray]:
