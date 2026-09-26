@@ -101,7 +101,7 @@ HELIAX_NATIVE_OPENMP=1 HELIAX_NATIVE_NATIVE_ARCH=1 python scripts/build_native.p
 
 Native dispatch is never automatic. The portable NumPy/BLAS path remains the default correctness reference; set `HELIAX_DISABLE_NATIVE=1` to force it.
 
-See [`docs/pytorch-integration.md`](docs/pytorch-integration.md) and [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+See [`docs/pytorch-integration.md`](docs/pytorch-integration.md), [`docs/torch-compat.md`](docs/torch-compat.md), and [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
 
 ## Run tests
 
