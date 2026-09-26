@@ -38,7 +38,18 @@ def test_shapes_and_views_backward():
     assert np.array_equal(value.grad.numpy()[:, 0], np.zeros(3, dtype=np.float32))
 
 
-def test_explicit_cpu_device_policy():
+def test_layout_diagnostics_and_freeze_controls():
+    value = hx.tensor(np.zeros((2, 3, 4), dtype=np.float32))
+    report = value.layout_report()
+    assert report["shape"] == (2, 3, 4)
+    assert report["contiguous"] is True
+    assert len(report["stride"]) == 3
+    model = hx.nn.Linear(3, 2, rng=np.random.default_rng(1))
+    model.freeze()
+    assert not any(parameter.requires_grad for parameter in model.parameters())
+    model.unfreeze()
+    assert all(parameter.requires_grad for parameter in model.parameters())
+
     value = hx.tensor([1.0], device="cpu:0")
     assert value.device == "cpu"
     assert value.to_device("cpu") is value

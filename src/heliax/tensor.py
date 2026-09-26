@@ -148,6 +148,21 @@ class Tensor:
     def device(self) -> str:
         return "cpu"
 
+    @property
+    def stride(self) -> tuple[int, ...]:
+        """Return NumPy element strides for layout diagnostics."""
+
+        return tuple(int(value) for value in self._data.strides)
+
+    def layout_report(self) -> dict[str, object]:
+        return {
+            "shape": self.shape,
+            "dtype": str(self.dtype),
+            "stride": self.stride,
+            "contiguous": self.is_contiguous,
+            "bytes": int(self._data.nbytes),
+        }
+
     def numpy(self) -> np.ndarray:
         """Return a NumPy view for explicit interoperability."""
 

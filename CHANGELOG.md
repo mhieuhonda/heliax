@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.2 — 2026-09-25
+
+### Added
+
+- Tensor layout diagnostics with strides, dtype, contiguity, and storage bytes.
+- `Module.freeze()` / `Module.unfreeze()` controls for inference and fine-tuning workflows.
+
 ## 0.6.1 — 2026-09-25
 
 ### Added

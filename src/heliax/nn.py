@@ -64,6 +64,16 @@ class Module:
             elif parameter.grad is not None:
                 parameter.grad.zero_()
 
+    def freeze(self) -> Module:
+        for parameter in self.parameters():
+            parameter.requires_grad = False
+        return self
+
+    def unfreeze(self) -> Module:
+        for parameter in self.parameters():
+            parameter.requires_grad = True
+        return self
+
     def register_buffer(self, name: str, value: np.ndarray, *, persistent: bool = True) -> None:
         if not hasattr(self, "_buffers"):
             self._buffers: dict[str, np.ndarray] = {}
