@@ -8,20 +8,22 @@ Heliax is a new, original Python deep-learning library built around a simple pro
 
 Heliax does **not** claim to beat PyTorch on every workload. PyTorch has years of ecosystem investment and a mature CUDA/distributed stack. Heliax is being built as a focused alternative for people who want a readable core, a small dependency surface, and a path toward fused/native kernels.
 
-## What is implemented in 0.3.7
+## What is implemented in 0.6.4
 
 - N-dimensional `Tensor` with broadcasting, views, dtype conversion, comparisons, and low-allocation in-place operations.
 - Reverse-mode automatic differentiation with graph traversal, gradient accumulation, `no_grad`, `gradcheck`, anomaly detection, and graph release.
 - `Linear`, `Conv2d`, pooling, `LayerNorm`, `BatchNorm1d/2d`, `GroupNorm`, `Embedding`, `MultiheadAttention`, transformer encoder, `GRU`, `LSTM`, `FusedLinearGELU`, and foundational activations.
 - `SGD`, `Nesterov SGD`, `Adagrad`, `Adam`, `AdamW`, `RMSProp`; gradient clipping; cosine/step/exponential schedules.
 - MSE, Huber, cross-entropy, binary cross-entropy, softmax, masked softmax, scaled dot-product attention, and functional APIs.
+- Complete one/two-operand einsum contractions, gathers, scatters, linalg, and causal masks.
 - 4-bit/8-bit symmetric and affine weight quantization with compression reporting.
-- NPZ state-dict/checkpoint serialization with persistent buffers and a bounded training loop supporting accumulation and schedulers.
+- Atomic NPZ checkpoints with rich JSON metadata and non-strict migration loading.
+- High-level `Trainer` with accumulation, scheduling, evaluation, and checkpoint helpers.
+- Bounded workspace buffers reused by Conv2d, with layout diagnostics and memory accounting.
 - Optional `TorchAccelerator` interop behind the `torch` extra; PyTorch is never a required dependency.
-- Opt-in C/ctypes native kernels for add+ReLU, GELU, softmax, LayerNorm, and AdamW.
-- Graph/memory diagnostics, gradient/training memory accounting, `DistributedSampler`, gradient reduction, ModelEMA, and fan-aware initialization.
-- Activation checkpointing, causal masks, linalg helpers, and explicit `autocast`/`GradScaler` policies.
-- QuantizedLinear inference, fused cross-entropy, and CI-safe benchmark smoke gates.
+- Opt-in C/ctypes native kernels for add+ReLU, GELU, softmax, fused cross entropy, LayerNorm, and AdamW.
+- Graph/memory diagnostics, `DistributedSampler`, gradient reduction, ModelEMA, fan-aware initialization, and freeze controls.
+- Activation checkpointing, explicit `autocast`/`GradScaler` policies, and QuantizedLinear inference.
 - A `helianthus` compatibility namespace re-exports the same core.
 - A pinned, license-preserving PyTorch reference snapshot under `third_party/pytorch/`.
 - Backend registry and environment reporting. NumPy is the default; native dispatch requires an explicit opt-in and benchmark.

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.5 — 2026-09-25
+
+### Added
+
+- Refreshed README feature matrix for the 0.6 baseline.
+- Consolidated documentation for einsum, workspaces, memory accounting, Trainer, and native reporting.
+
 ## 0.6.4 — 2026-09-25
 
 ### Added
