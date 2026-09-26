@@ -6,20 +6,22 @@ Heliax is a new, original Python deep-learning library built around a simple pro
 
 Heliax does **not** claim to beat PyTorch on every workload. PyTorch has years of ecosystem investment and a mature CUDA/distributed stack. Heliax is being built as a focused alternative for people who want a readable core, a small dependency surface, and a path toward fused/native kernels.
 
-## What is implemented in 0.2
+## What is implemented in 0.3
 
-- N-dimensional `Tensor` with broadcasting, views, dtype conversion, and in-place-free operations.
-- Reverse-mode automatic differentiation with graph traversal, gradient accumulation, `no_grad`, and `gradcheck`.
-- `Linear`, `Conv2d`, `LayerNorm`, `Embedding`, `MultiheadAttention`, `FusedLinearGELU`, `ReLU`, `GELU`, `SiLU`, `Sigmoid`, `Tanh`, `Dropout`, and `Sequential`.
-- `SGD`, `Nesterov SGD`, `Adam`, `AdamW`, and `RMSProp`; gradient clipping; cosine/step schedules.
-- MSE, cross-entropy, binary cross-entropy, softmax, masked softmax, scaled dot-product attention, and functional APIs.
+- N-dimensional `Tensor` with broadcasting, views, dtype conversion, comparisons, and low-allocation in-place operations.
+- Reverse-mode automatic differentiation with graph traversal, gradient accumulation, `no_grad`, `gradcheck`, anomaly detection, and graph release.
+- `Linear`, `Conv2d`, pooling, `LayerNorm`, `BatchNorm1d/2d`, `GroupNorm`, `Embedding`, `MultiheadAttention`, transformer encoder, `GRU`, `LSTM`, `FusedLinearGELU`, and foundational activations.
+- `SGD`, `Nesterov SGD`, `Adagrad`, `Adam`, `AdamW`, `RMSProp`; gradient clipping; cosine/step/exponential schedules.
+- MSE, Huber, cross-entropy, binary cross-entropy, softmax, masked softmax, scaled dot-product attention, and functional APIs.
 - 4-bit/8-bit symmetric and affine weight quantization with compression reporting.
-- NPZ state-dict/checkpoint serialization and a small training loop helper.
+- NPZ state-dict/checkpoint serialization with persistent buffers and a bounded training loop supporting accumulation and schedulers.
 - Optional `TorchAccelerator` interop behind the `torch` extra; PyTorch is never a required dependency.
+- Opt-in C/ctypes native kernels for add+ReLU, GELU, softmax, LayerNorm, and AdamW.
+- Graph/memory diagnostics, `DistributedSampler`, gradient reduction, and fan-aware initialization.
 - A `helianthus` compatibility namespace re-exports the same core.
 - A pinned, license-preserving PyTorch reference snapshot under `third_party/pytorch/`.
-- Backend registry and environment reporting. NumPy is the default; a native backend can be added without changing the public Tensor API.
-- Focused tests, gradient checks, a benchmark script, packaging, and CI.
+- Backend registry and environment reporting. NumPy is the default; native dispatch requires an explicit opt-in and benchmark.
+- Focused tests, gradient checks, benchmark scripts, packaging, and CI.
 
 ## Quick start
 
@@ -83,6 +85,17 @@ Projects that want the Helianthus namespace can use:
 ```python
 import helianthus as hx
 ```
+
+## Optional native CPU kernels
+
+Build the small dependency-free C library and opt in only after benchmarking it on your machine:
+
+```bash
+python scripts/build_native.py
+HELIAX_NATIVE=1 python examples/native_benchmark.py
+```
+
+Native dispatch is never automatic. The portable NumPy/BLAS path remains the default correctness reference; set `HELIAX_DISABLE_NATIVE=1` to force it.
 
 See [`docs/pytorch-integration.md`](docs/pytorch-integration.md) and [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
 

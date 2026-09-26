@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.3.0 — 2026-09-25
+
+### Added
+
+- Opt-in C/ctypes native kernels for add+ReLU, GELU, softmax, LayerNorm, and AdamW.
+- `MaxPool2d`, `AvgPool2d`, BatchNorm1d/2d, GroupNorm, GRU, LSTM, transformer encoder, and positional encoding.
+- Graph/memory diagnostics, anomaly detection, graph release, and op histograms.
+- Gradient accumulation, schedulers, Adagrad, ExponentialLR, and a bounded `fit` loop.
+- DistributedSampler and in-process gradient reduction helpers.
+- Fan-aware parameter initialization utilities.
+- Huber loss, elementwise comparison/autograd helpers, and broader edge-case coverage.
+
 ## 0.2.0 — 2026-09-25
 
 ### Added
