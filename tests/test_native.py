@@ -58,6 +58,17 @@ def test_native_kernels_match_numpy_reference():
     assert np.all(first > 0.0) and np.all(second > 0.0)
     prediction = rng.normal(size=(4, 5)).astype(np.float32)
     target_values = rng.normal(size=(4, 5)).astype(np.float32)
+    huber_loss, huber_gradient = hx.native_ops.huber(prediction, target_values, delta=0.75)
+    difference_huber = prediction - target_values
+    absolute_huber = np.abs(difference_huber)
+    expected_huber = np.where(
+        absolute_huber <= 0.75,
+        0.5 * absolute_huber**2,
+        0.75 * (absolute_huber - 0.375),
+    )
+    assert np.allclose(huber_loss, float(expected_huber.mean()), atol=1e-5)
+    expected_huber_gradient = np.clip(difference_huber, -0.75, 0.75) / 20
+    assert np.allclose(huber_gradient, expected_huber_gradient, atol=1e-5)
     mse_loss, mse_gradient = hx.native_ops.mse(prediction, target_values)
     difference = prediction - target_values
     assert np.allclose(mse_loss, float(np.mean(difference**2)), atol=1e-5)

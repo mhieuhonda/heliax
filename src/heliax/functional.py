@@ -249,6 +249,24 @@ def huber_loss(prediction: Tensor, target: Any, delta: float = 1.0) -> Tensor:
     )
     if delta <= 0:
         raise ValueError("Huber delta must be positive")
+    if prediction._data.dtype == np.float32:
+        from . import native_ops
+
+        if native_ops.native_enabled() and native_ops.native_available():
+            native_loss, native_gradient = native_ops.huber(prediction.numpy(), target_data, delta)
+            output = prediction._make(
+                np.asarray(native_loss, dtype=prediction.dtype),
+                (prediction,),
+                lambda: None,
+                "huber",
+            )
+            if output.requires_grad:
+
+                def run_backward() -> None:
+                    _accumulate(prediction, native_gradient)
+
+                output._backward = run_backward
+            return output
     difference = prediction - target_data
     absolute = np.abs(difference.numpy())
     quadratic = np.minimum(absolute, delta)

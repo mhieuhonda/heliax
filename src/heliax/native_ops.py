@@ -58,6 +58,14 @@ def _load() -> ctypes.CDLL | None:
             ctypes.c_size_t,
             ctypes.c_size_t,
         ]
+        library.hx_huber.argtypes = [
+            ctypes.POINTER(ctypes.c_float),
+            ctypes.POINTER(ctypes.c_float),
+            ctypes.POINTER(ctypes.c_float),
+            ctypes.POINTER(ctypes.c_float),
+            ctypes.c_size_t,
+            ctypes.c_float,
+        ]
         library.hx_mse.argtypes = [
             ctypes.POINTER(ctypes.c_float),
             ctypes.POINTER(ctypes.c_float),
@@ -100,6 +108,7 @@ def _load() -> ctypes.CDLL | None:
             "hx_add_relu",
             "hx_gelu",
             "hx_softmax_lastdim",
+            "hx_huber",
             "hx_mse",
             "hx_cross_entropy_lastdim",
             "hx_layernorm_lastdim",
@@ -143,6 +152,7 @@ def native_info() -> dict[str, Any]:
         "kernels": [
             "add_relu",
             "gelu",
+            "huber",
             "mse",
             "softmax_lastdim",
             "cross_entropy_lastdim",
@@ -205,6 +215,33 @@ def softmax_lastdim(value: np.ndarray) -> np.ndarray:
         array.shape[-1],
     )
     return output
+
+
+def huber(
+    prediction: np.ndarray, target: np.ndarray, delta: float = 1.0
+) -> tuple[float, np.ndarray]:
+    library = _load()
+    if library is None:
+        raise RuntimeError(_LOAD_ERROR or "native backend unavailable")
+    pred_input = np.asarray(prediction)
+    target_input = np.asarray(target)
+    try:
+        result_shape = np.broadcast_shapes(pred_input.shape, target_input.shape)
+    except ValueError as error:
+        raise ValueError("huber operands are not broadcastable") from error
+    pred = _float32_view(np.broadcast_to(pred_input, result_shape))
+    target_array = _float32_view(np.broadcast_to(target_input, result_shape))
+    loss = np.zeros(1, dtype=np.float32)
+    gradient = np.empty_like(pred)
+    library.hx_huber(
+        pred.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
+        target_array.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
+        loss.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
+        gradient.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
+        pred.size,
+        ctypes.c_float(delta),
+    )
+    return float(loss[0]), gradient
 
 
 def mse(prediction: np.ndarray, target: np.ndarray) -> tuple[float, np.ndarray]:

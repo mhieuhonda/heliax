@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.7 — 2026-09-25
+
+### Added
+
+- Native fused Huber loss kernel with broadcast-aware targets and fused gradients.
+- Native report now covers eight kernels including Huber and MSE.
+
 ## 0.6.6 — 2026-09-25
 
 ### Added

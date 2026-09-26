@@ -47,6 +47,12 @@ def build_report(*, repeats: int = 7) -> dict[str, object]:
     prediction = generator.normal(size=(128, 16)).astype(np.float32)
     target_values = generator.normal(size=(128, 16)).astype(np.float32)
     cases = {
+        "huber": (
+            lambda: hx.native_ops.huber(prediction, target_values, delta=0.75),
+            lambda: hx.functional.huber_loss(
+                hx.tensor(prediction), target_values, delta=0.75
+            ).numpy(),
+        ),
         "mse": (
             lambda: hx.native_ops.mse(prediction, target_values),
             lambda: hx.functional.mean_squared_error(hx.tensor(prediction), target_values).numpy(),

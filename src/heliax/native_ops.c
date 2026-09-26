@@ -52,6 +52,28 @@ void hx_softmax_lastdim(const float *x, float *out, size_t rows, size_t cols) {
     }
 }
 
+void hx_huber(const float *prediction, const float *target, float *loss,
+              float *gradient, size_t n, float delta) {
+    float total = 0.0f;
+    const float inverse_n = n > 0 ? 1.0f / (float)n : 0.0f;
+    #pragma omp parallel for reduction(+ : total) if (n > 4096)
+    for (size_t i = 0; i < n; ++i) {
+        const float difference = prediction[i] - target[i];
+        const float absolute = fabsf(difference);
+        total += absolute <= delta ? 0.5f * absolute * absolute
+                                    : delta * (absolute - 0.5f * delta);
+    }
+    *loss = total * inverse_n;
+    #pragma omp parallel for if (n > 4096)
+    for (size_t i = 0; i < n; ++i) {
+        const float difference = prediction[i] - target[i];
+        const float absolute = fabsf(difference);
+        const float derivative = absolute <= delta ? difference
+                                                  : (difference < 0.0f ? -delta : delta);
+        gradient[i] = derivative * inverse_n;
+    }
+}
+
 void hx_mse(const float *prediction, const float *target, float *loss,
             float *gradient, size_t n) {
     float squared_error = 0.0f;
