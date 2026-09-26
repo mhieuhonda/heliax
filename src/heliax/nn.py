@@ -764,6 +764,97 @@ class Conv1d(Module):
         return result
 
 
+class MaxPool1d(Module):
+    def __init__(self, kernel_size: int, stride: int | None = None, padding: int = 0) -> None:
+        super().__init__()
+        if kernel_size <= 0 or padding < 0 or (stride is not None and stride <= 0):
+            raise ValueError("MaxPool1d parameters must be positive with non-negative padding")
+        self.kernel_size = int(kernel_size)
+        self.stride = int(stride or kernel_size)
+        self.padding = int(padding)
+
+    def forward(self, value: Tensor) -> Tensor:
+        if value.ndim != 3:
+            raise ValueError(f"MaxPool1d expects N x C x L input, got shape {value.shape}")
+        padded = np.pad(value.numpy(), ((0, 0), (0, 0), (self.padding, self.padding)))
+        length = (value.shape[-1] + 2 * self.padding - self.kernel_size) // self.stride + 1
+        if length <= 0:
+            raise ValueError("MaxPool1d kernel is larger than the padded input")
+        windows = np.stack(
+            [
+                padded[:, :, index * self.stride : index * self.stride + self.kernel_size]
+                for index in range(length)
+            ],
+            axis=-1,
+        )
+        indices = np.argmax(windows, axis=2)
+        output = np.take_along_axis(windows, indices[:, :, np.newaxis, :], axis=2)[:, :, 0, :]
+        result = value._make(output, (value,), lambda: None, "max_pool1d")
+        if result.requires_grad:
+
+            def run_backward() -> None:
+                gradient = result.grad.numpy()
+                mask = np.zeros_like(windows, dtype=np.float32)
+                np.put_along_axis(mask, indices[:, :, np.newaxis, :], 1.0, axis=2)
+                grad_padded = np.zeros(
+                    (value.shape[0], value.shape[1], value.shape[2] + 2 * self.padding),
+                    dtype=value.dtype,
+                )
+                for index in range(self.kernel_size):
+                    start = index
+                    grad_padded[
+                        :, :, start : start + (length - 1) * self.stride + 1 : self.stride
+                    ] += gradient * mask[:, :, index, :]
+                _accumulate(value, grad_padded[:, :, self.padding : self.padding + value.shape[2]])
+
+            result._backward = run_backward
+        return result
+
+
+class AvgPool1d(Module):
+    def __init__(self, kernel_size: int, stride: int | None = None, padding: int = 0) -> None:
+        super().__init__()
+        if kernel_size <= 0 or padding < 0 or (stride is not None and stride <= 0):
+            raise ValueError("AvgPool1d parameters must be positive with non-negative padding")
+        self.kernel_size = int(kernel_size)
+        self.stride = int(stride or kernel_size)
+        self.padding = int(padding)
+
+    def forward(self, value: Tensor) -> Tensor:
+        if value.ndim != 3:
+            raise ValueError(f"AvgPool1d expects N x C x L input, got shape {value.shape}")
+        padded = np.pad(value.numpy(), ((0, 0), (0, 0), (self.padding, self.padding)))
+        length = (value.shape[-1] + 2 * self.padding - self.kernel_size) // self.stride + 1
+        if length <= 0:
+            raise ValueError("AvgPool1d kernel is larger than the padded input")
+        windows = np.stack(
+            [
+                padded[:, :, index * self.stride : index * self.stride + self.kernel_size]
+                for index in range(length)
+            ],
+            axis=-1,
+        )
+        output = windows.mean(axis=2)
+        result = value._make(output, (value,), lambda: None, "avg_pool1d")
+        if result.requires_grad:
+
+            def run_backward() -> None:
+                gradient = result.grad.numpy() / self.kernel_size
+                grad_padded = np.zeros(
+                    (value.shape[0], value.shape[1], value.shape[2] + 2 * self.padding),
+                    dtype=value.dtype,
+                )
+                for index in range(self.kernel_size):
+                    start = index
+                    grad_padded[
+                        :, :, start : start + (length - 1) * self.stride + 1 : self.stride
+                    ] += gradient
+                _accumulate(value, grad_padded[:, :, self.padding : self.padding + value.shape[2]])
+
+            result._backward = run_backward
+        return result
+
+
 class MaxPool2d(Module):
     def __init__(
         self,

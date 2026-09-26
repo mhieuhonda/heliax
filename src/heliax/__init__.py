@@ -62,6 +62,7 @@ from .nn import (
     GRU,
     LSTM,
     MLP,
+    AvgPool1d,
     AvgPool2d,
     BatchNorm1d,
     BatchNorm2d,
@@ -77,6 +78,7 @@ from .nn import (
     LayerNorm,
     Linear,
     LogSoftmax,
+    MaxPool1d,
     MaxPool2d,
     Module,
     ModuleDict,
@@ -152,7 +154,7 @@ from .training import Trainer
 from .workspace import Workspace
 from .workspace import workspace as workspace_context
 
-__version__ = "0.6.24"
+__version__ = "0.6.25"
 
 __all__ = [
     "GELU",
@@ -163,6 +165,7 @@ __all__ = [
     "Adagrad",
     "Adam",
     "AdamW",
+    "AvgPool1d",
     "AvgPool2d",
     "BatchNorm1d",
     "BatchNorm2d",
@@ -184,6 +187,7 @@ __all__ = [
     "LayerNorm",
     "Linear",
     "LogSoftmax",
+    "MaxPool1d",
     "MaxPool2d",
     "ModelEMA",
     "Module",

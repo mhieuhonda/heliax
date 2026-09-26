@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.25 — 2026-09-25
+
+### Added
+
+- `MaxPool1d` and `AvgPool1d` layers with stride, padding, and autograd support.
+- Forward, gradient, and window-axis regression coverage.
+
 ## 0.6.24 — 2026-09-25
 
 ### Added
