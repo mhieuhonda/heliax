@@ -31,6 +31,15 @@ def test_native_kernels_match_numpy_reference():
     assert np.allclose(hx.native_ops.softmax_lastdim(array), reference_softmax, atol=1e-6)
     reference_log_softmax = shifted - np.log(np.sum(np.exp(shifted), axis=-1, keepdims=True))
     assert np.allclose(hx.native_ops.log_softmax_lastdim(array), reference_log_softmax, atol=1e-6)
+    axis_zero = hx.functional.log_softmax(hx.tensor(array), axis=0)
+    reference_axis_zero = (
+        array
+        - np.max(array, axis=0, keepdims=True)
+        - np.log(
+            np.sum(np.exp(array - np.max(array, axis=0, keepdims=True)), axis=0, keepdims=True)
+        )
+    )
+    assert np.allclose(axis_zero.numpy(), reference_axis_zero, atol=1e-6)
     assert np.allclose(hx.native_ops.add_relu(left, right), np.maximum(left + right, 0), atol=1e-6)
     assert np.allclose(
         hx.native_ops.layernorm_lastdim(

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.10 — 2026-09-25
+
+### Fixed
+
+- Native log-softmax dispatch now supports arbitrary class axes through moveaxis.
+- Added arbitrary-axis native log-softmax regression coverage.
+
 ## 0.6.9 — 2026-09-25
 
 ### Added
