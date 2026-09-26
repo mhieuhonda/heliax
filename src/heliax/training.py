@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import Any
 
-from .optim import clip_grad_norm_
+from .optim import clip_grad_norm_, step_scheduler
 from .tensor import Tensor, no_grad
 
 
@@ -51,7 +51,7 @@ class Trainer:
             clip_grad_norm_(parameters, self.grad_clip)
         self.optimizer.step()
         if self.scheduler is not None:
-            self.scheduler.step()
+            step_scheduler(self.scheduler, float(loss.item()))
         self.global_step += 1
 
     def train_epoch(self, loader: Iterable[tuple[Tensor, ...]]) -> dict[str, float]:

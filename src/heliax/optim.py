@@ -434,6 +434,16 @@ class CosineAnnealingLR(LRScheduler):
         return self.eta_min + (self.base_lrs[0] - self.eta_min) * cosine
 
 
+def step_scheduler(scheduler: Any, metric: float | None = None) -> float | None:
+    """Advance fixed-step or metric-driven schedulers uniformly."""
+
+    if hasattr(scheduler, "patience") and hasattr(scheduler, "mode"):
+        if metric is None:
+            raise ValueError("metric-driven schedulers require a metric value")
+        return float(scheduler.step(float(metric)))
+    return float(scheduler.step())
+
+
 class CosineAnnealingWarmRestarts(LRScheduler):
     def __init__(
         self,

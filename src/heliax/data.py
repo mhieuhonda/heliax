@@ -8,6 +8,7 @@ from typing import Any
 
 import numpy as np
 
+from .optim import step_scheduler
 from .tensor import Tensor
 
 
@@ -164,7 +165,7 @@ def fit(
                 pending_batches = 0
                 global_steps += 1
                 if scheduler is not None:
-                    scheduler.step()
+                    step_scheduler(scheduler, float(loss.item()))
                 if max_steps is not None and global_steps >= max_steps:
                     stop = True
                     break
@@ -173,7 +174,7 @@ def fit(
                 clip_grad_norm_(parameters, grad_clip)
             optimizer.step()
             if scheduler is not None:
-                scheduler.step()
+                step_scheduler(scheduler, float(loss.item()))
             global_steps += 1
         average = total_loss / max(examples, 1)
         history.append(average)

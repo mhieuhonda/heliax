@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.17 — 2026-09-25
+
+### Fixed
+
+- `fit` and `Trainer` now step fixed-step and metric-driven schedulers uniformly.
+- Added integration coverage for `ReduceLROnPlateau` in the training loop.
+
 ## 0.6.16 — 2026-09-25
 
 ### Added
