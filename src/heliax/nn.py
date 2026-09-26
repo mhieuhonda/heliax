@@ -1082,6 +1082,11 @@ class ModuleList(Module):
         self.items.append(module)
         return self
 
+    def forward(self, value: Tensor) -> Tensor:
+        for module in self.items:
+            value = module(value)
+        return value
+
 
 class ModuleDict(Module):
     def __init__(self, modules: dict[str, Module] | None = None) -> None:
