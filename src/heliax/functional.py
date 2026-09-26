@@ -557,6 +557,51 @@ def where(condition: Tensor | np.ndarray, left: Tensor, right: Tensor) -> Tensor
     return output
 
 
+def l2_norm(
+    value: Tensor,
+    axis: int | tuple[int, ...] | None = None,
+    keepdims: bool = False,
+    eps: float = 1e-12,
+) -> Tensor:
+    data = np.sqrt(
+        np.sum(value.numpy() ** 2, axis=axis, keepdims=keepdims, dtype=value.dtype) + eps
+    )
+    output = value._make(data, (value,), lambda: None, "l2_norm")
+    if output.requires_grad:
+
+        def run_backward() -> None:
+            normalized = value.numpy() / np.maximum(data, eps)
+            if axis is not None and not keepdims:
+                normalized = np.expand_dims(normalized, axis if isinstance(axis, int) else axis[0])
+            _accumulate(value, output.grad.numpy() * normalized)
+
+        output._backward = run_backward
+    return output
+
+
+def cosine_similarity(left: Tensor, right: Tensor, axis: int = -1, eps: float = 1e-12) -> Tensor:
+    left_data, right_data = left.numpy(), right.numpy()
+    left_norm = np.sqrt(np.sum(left_data**2, axis=axis, keepdims=True, dtype=left_data.dtype) + eps)
+    right_norm = np.sqrt(
+        np.sum(right_data**2, axis=axis, keepdims=True, dtype=right_data.dtype) + eps
+    )
+    data = np.sum(left_data * right_data, axis=axis, keepdims=True, dtype=left_data.dtype) / (
+        left_norm * right_norm
+    )
+    output = left._make(data, (left, right), lambda: None, "cosine_similarity")
+    if output.requires_grad:
+
+        def run_backward() -> None:
+            cosine = data
+            grad_left = (right_data - cosine * left_data) / (left_norm * right_norm)
+            grad_right = (left_data - cosine * right_data) / (left_norm * right_norm)
+            _accumulate(left, output.grad.numpy() * grad_left)
+            _accumulate(right, output.grad.numpy() * grad_right)
+
+        output._backward = run_backward
+    return output
+
+
 def concatenate(values: list[Tensor], axis: int = 0) -> Tensor:
     if not values:
         raise ValueError("concatenate requires at least one tensor")
