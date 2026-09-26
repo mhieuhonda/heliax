@@ -408,13 +408,16 @@ def fused_cross_entropy(logits: Tensor, target: Any, axis: int = -1) -> Tensor:
             raise ValueError("class targets must be integer indices")
         target_data = rounded.astype(np.int64)
     count = max(int(target_data.size), 1)
-    if normalized_axis == logits.ndim - 1 and logits._data.dtype == np.float32:
+    if logits._data.dtype == np.float32:
         from . import native_ops
 
         if native_ops.native_enabled() and native_ops.native_available():
+            moved = np.moveaxis(logits.numpy(), normalized_axis, -1)
+            flat = np.ascontiguousarray(moved).reshape(-1, moved.shape[-1])
             native_loss, native_gradient = native_ops.cross_entropy_lastdim(
-                logits.numpy(), target_data.reshape(-1)
+                flat, target_data.reshape(-1)
             )
+            native_gradient = np.moveaxis(native_gradient.reshape(moved.shape), -1, normalized_axis)
             output = logits._make(
                 np.asarray(native_loss, dtype=logits.dtype),
                 (logits,),

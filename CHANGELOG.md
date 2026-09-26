@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.4 — 2026-09-25
+
+### Added
+
+- Native fused cross-entropy dispatch for arbitrary class axes via moveaxis.
+- Atomic checkpoint writes and gradient/training memory accounting retained as the 0.5 baseline.
+
 ## 0.5.3 — 2026-09-25
 
 ### Fixed
