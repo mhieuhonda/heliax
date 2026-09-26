@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.9 — 2026-09-25
+
+### Fixed
+
+- `cross_entropy` and `fused_cross_entropy` now support arbitrary class axes.
+- Single-operand einsum supports common unique-label reductions in addition to trace/permutation.
+- Added regression coverage for axis-generic classification and reductions.
+
 ## 0.4.8 — 2026-09-25
 
 ### Added

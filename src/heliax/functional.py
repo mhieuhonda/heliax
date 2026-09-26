@@ -339,24 +339,28 @@ def add_relu(left: Tensor, right: Tensor | np.ndarray | float) -> Tensor:
 
 
 def cross_entropy(logits: Tensor, target: Any, axis: int = -1) -> Tensor:
-    target_data = target.numpy() if isinstance(target, Tensor) else np.asarray(target)
-    if target_data.ndim == logits.ndim:
-        if target_data.shape[-1] != logits.shape[-1] or target_data.shape[:-1] != logits.shape[:-1]:
-            raise ValueError("one-hot cross_entropy targets must match logits shape")
-        target_data = np.argmax(target_data, axis=axis)
     if logits.ndim == 0:
         raise ValueError("cross_entropy expects a logits tensor with a class dimension")
-    if target_data.shape != logits.shape[:-1]:
-        target_data = target_data.reshape(logits.shape[:-1])
+    normalized_axis = axis if axis >= 0 else axis + logits.ndim
+    if normalized_axis < 0 or normalized_axis >= logits.ndim:
+        raise ValueError("cross-entropy axis is out of range")
+    expected_shape = logits.shape[:normalized_axis] + logits.shape[normalized_axis + 1 :]
+    target_data = target.numpy() if isinstance(target, Tensor) else np.asarray(target)
+    if target_data.ndim == logits.ndim:
+        target_data = np.argmax(target_data, axis=normalized_axis)
+    if target_data.shape == logits.shape:
+        target_data = np.squeeze(target_data, axis=normalized_axis)
+    if target_data.shape != expected_shape:
+        target_data = target_data.reshape(expected_shape)
     if not np.issubdtype(target_data.dtype, np.integer):
         rounded = np.rint(target_data)
         if not np.allclose(target_data, rounded):
             raise ValueError("class targets must be integer indices")
         target_data = rounded.astype(np.int64)
-    log_probs = log_softmax(logits, axis=axis)
-    selected = np.take_along_axis(
-        log_probs.numpy(), target_data.astype(np.int64)[..., np.newaxis], axis=axis
-    )
+    count = max(int(target_data.size), 1)
+    log_probs = log_softmax(logits, axis=normalized_axis)
+    target_index = np.expand_dims(target_data.astype(np.int64), normalized_axis)
+    selected = np.take_along_axis(log_probs.numpy(), target_index, axis=normalized_axis)
     output_data = -selected.mean()
     output = logits._make(
         np.asarray(output_data, dtype=logits.dtype), (logits,), lambda: None, "cross_entropy"
@@ -364,15 +368,16 @@ def cross_entropy(logits: Tensor, target: Any, axis: int = -1) -> Tensor:
     if output.requires_grad:
 
         def run_backward() -> None:
-            probabilities = get_backend().softmax(logits.numpy(), axis=axis)
-            probabilities /= max(int(target_data.size), 1)
-            target_index = target_data.astype(np.int64)[..., np.newaxis]
-            selected_probability = np.take_along_axis(probabilities, target_index, axis=axis)
+            probabilities = get_backend().softmax(logits.numpy(), axis=normalized_axis)
+            probabilities /= count
+            selected_probability = np.take_along_axis(
+                probabilities, target_index, axis=normalized_axis
+            )
             np.put_along_axis(
                 probabilities,
                 target_index,
-                selected_probability - (1.0 / max(int(target_data.size), 1)),
-                axis=axis,
+                selected_probability - (1.0 / count),
+                axis=normalized_axis,
             )
             _accumulate(logits, probabilities)
 
@@ -381,23 +386,30 @@ def cross_entropy(logits: Tensor, target: Any, axis: int = -1) -> Tensor:
 
 
 def fused_cross_entropy(logits: Tensor, target: Any, axis: int = -1) -> Tensor:
-    """Cross-entropy as one stable forward/backward node on the last axis."""
+    """Cross-entropy as one stable forward/backward node along ``axis``."""
 
-    if axis not in {-1, logits.ndim - 1}:
-        raise NotImplementedError("fused_cross_entropy currently supports the last axis")
+    if logits.ndim == 0:
+        raise ValueError("cross-entropy requires logits with a class axis")
+    normalized_axis = axis if axis >= 0 else axis + logits.ndim
+    if normalized_axis < 0 or normalized_axis >= logits.ndim:
+        raise ValueError("cross-entropy axis is out of range")
+    expected_shape = logits.shape[:normalized_axis] + logits.shape[normalized_axis + 1 :]
     target_data = target.numpy() if isinstance(target, Tensor) else np.asarray(target)
     if target_data.ndim == logits.ndim:
-        target_data = np.argmax(target_data, axis=axis)
-    if target_data.shape != logits.shape[:-1]:
-        target_data = target_data.reshape(logits.shape[:-1])
+        target_data = np.argmax(target_data, axis=normalized_axis)
+    if target_data.shape == logits.shape:
+        target_data = np.squeeze(target_data, axis=normalized_axis)
+    if target_data.shape != expected_shape:
+        target_data = target_data.reshape(expected_shape)
     if not np.issubdtype(target_data.dtype, np.integer):
         rounded = np.rint(target_data)
         if not np.allclose(target_data, rounded):
             raise ValueError("class targets must be integer indices")
         target_data = rounded.astype(np.int64)
-    probabilities = get_backend().softmax(logits.numpy(), axis=axis)
-    index = target_data.astype(np.int64)[..., np.newaxis]
-    selected = np.take_along_axis(probabilities, index, axis=axis)
+    count = max(int(target_data.size), 1)
+    probabilities = get_backend().softmax(logits.numpy(), axis=normalized_axis)
+    index = np.expand_dims(target_data.astype(np.int64), normalized_axis)
+    selected = np.take_along_axis(probabilities, index, axis=normalized_axis)
     output_data = -np.log(np.maximum(selected, 1e-12)).mean()
     output = logits._make(
         np.asarray(output_data, dtype=logits.dtype), (logits,), lambda: None, "fused_cross_entropy"
@@ -405,13 +417,13 @@ def fused_cross_entropy(logits: Tensor, target: Any, axis: int = -1) -> Tensor:
     if output.requires_grad:
 
         def run_backward() -> None:
-            gradient = probabilities / max(int(target_data.size), 1)
-            selected_probability = np.take_along_axis(gradient, index, axis=axis)
+            gradient = probabilities / count
+            selected_probability = np.take_along_axis(gradient, index, axis=normalized_axis)
             np.put_along_axis(
                 gradient,
                 index,
-                selected_probability - (1.0 / max(int(target_data.size), 1)),
-                axis=axis,
+                selected_probability - (1.0 / count),
+                axis=normalized_axis,
             )
             _accumulate(logits, gradient)
 
@@ -645,6 +657,17 @@ def einsum(equation: str, left: Tensor, right: Tensor | None = None) -> Tensor:
                     left_equation
                 ):
                     _accumulate(left, np.einsum(f"{output_equation}->{left_equation}", grad))
+                elif len(set(left_equation)) == len(left_equation):
+                    kept = "".join(label for label in left_equation if label in output_equation)
+                    kept_gradient = np.einsum(f"{output_equation}->{kept}", grad)
+                    reduced_positions = [
+                        position
+                        for position, label in enumerate(left_equation)
+                        if label not in output_equation
+                    ]
+                    for position in reversed(reduced_positions):
+                        kept_gradient = np.expand_dims(kept_gradient, axis=position)
+                    _accumulate(left, kept_gradient)
                 elif not output_equation and left.ndim == 1:
                     _accumulate(left, np.broadcast_to(grad, left.shape).copy())
                 elif not output_equation:
@@ -653,7 +676,7 @@ def einsum(equation: str, left: Tensor, right: Tensor | None = None) -> Tensor:
                     _accumulate(left, diagonal)
                 else:
                     raise NotImplementedError(
-                        "this single-operand einsum reduction needs an explicit rule"
+                        "single-operand einsum with repeated labels is limited to trace/permutation"
                     )
 
             output._backward = run_backward

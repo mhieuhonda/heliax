@@ -18,6 +18,24 @@ def test_fused_cross_entropy_matches_reference_and_gradcheck():
     assert hx.nn.CrossEntropyLoss()(logits.detach(), target).shape == ()
 
 
+def test_fused_cross_entropy_supports_arbitrary_class_axis():
+    generator = np.random.default_rng(1)
+    logits = hx.tensor(generator.normal(size=(2, 3, 4)).astype(np.float32), requires_grad=True)
+    target = np.array([0, 2, 1, 1, 0, 2, 1, 0], dtype=np.int64).reshape(2, 4)
+    fused = hx.fused_cross_entropy(logits, target, axis=1)
+    reference = hx.cross_entropy(logits, target, axis=1)
+    assert np.allclose(fused.numpy(), reference.numpy(), atol=1e-6)
+    fused.backward()
+    assert logits.grad is not None
+    logits.zero_grad()
+    one_hot = np.zeros((2, 3, 4), dtype=np.float32)
+    row, column = np.indices(target.shape)
+    one_hot[row, target, column] = 1.0
+    assert np.allclose(
+        hx.fused_cross_entropy(logits, one_hot, axis=1).numpy(), reference.numpy(), atol=1e-6
+    )
+
+
 def test_fused_cross_entropy_module_training():
     model = hx.nn.Linear(3, 2, rng=np.random.default_rng(4))
     loss_fn = hx.nn.CrossEntropyLoss()
