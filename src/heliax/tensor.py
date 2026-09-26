@@ -586,6 +586,68 @@ class Tensor:
     def flatten(self) -> Tensor:
         return self.reshape((self.shape[0] if self.shape else 1, -1))
 
+    def expand(self, *shape: int | tuple[int, ...]) -> Tensor:
+        target = shape[0] if len(shape) == 1 and isinstance(shape[0], tuple) else shape
+        data = np.broadcast_to(self._data, target).copy()
+        output = self._make(data, (self,), lambda: None, "expand")
+        if output.requires_grad:
+
+            def run_backward() -> None:
+                _accumulate(self, unbroadcast(output.grad.numpy(), self.shape))
+
+            output._backward = run_backward
+        return output
+
+    def repeat(self, repeats: int | Sequence[int], axis: int | None = None) -> Tensor:
+        data = np.repeat(self._data, repeats, axis=axis)
+        output = self._make(data, (self,), lambda: None, "repeat")
+        if output.requires_grad:
+
+            def run_backward() -> None:
+                grad = output.grad.numpy()
+                if axis is None:
+                    _accumulate(
+                        self,
+                        grad.reshape(self.shape).sum(axis=tuple(range(self.ndim - 1, -1, -1)))
+                        if self.ndim
+                        else grad,
+                    )
+                else:
+                    normalized_axis = axis if axis >= 0 else axis + self.ndim
+                    _accumulate(
+                        self, np.expand_dims(grad.sum(axis=normalized_axis), normalized_axis)
+                    )
+
+            output._backward = run_backward
+        return output
+
+    def roll(self, shifts: int | Sequence[int], axis: int | Sequence[int] | None = None) -> Tensor:
+        data = np.roll(self._data, shifts, axis=axis)
+        output = self._make(data, (self,), lambda: None, "roll")
+        if output.requires_grad:
+
+            def run_backward() -> None:
+                if isinstance(shifts, int):
+                    inverse = -shifts
+                else:
+                    inverse = tuple(-int(shift) for shift in shifts)
+                _accumulate(self, np.roll(output.grad.numpy(), inverse, axis=axis))
+
+            output._backward = run_backward
+        return output
+
+    def squeeze(self, axis: int | tuple[int, ...] | None = None) -> Tensor:
+        return self._unary(
+            lambda x: np.squeeze(x, axis=axis),
+            lambda g, x: np.broadcast_to(g, x.shape).copy(),
+            "squeeze",
+        )
+
+    def unsqueeze(self, axis: int | tuple[int, ...]) -> Tensor:
+        return self._unary(
+            lambda x: np.expand_dims(x, axis=axis), lambda g, x: np.sum(g, axis=axis), "unsqueeze"
+        )
+
     def astype(self, dtype: Any) -> Tensor:
         return self._unary(
             lambda x: x.astype(dtype, copy=False),
