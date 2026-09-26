@@ -11,6 +11,7 @@ A small pinned reference snapshot lives in `third_party/pytorch/` at upstream co
 - Quantized GELU reference.
 - TorchScript/tensor-expr softmax and matmul references.
 - LayerNorm, log-softmax, and embedding reference interfaces.
+- PyTorch convolution, normalization, and activation module references.
 - AdamW reference and operator benchmark structure.
 - PyTorch `LICENSE` and `NOTICE`.
 
@@ -40,7 +41,7 @@ python scripts/build_native.py
 HELIAX_NATIVE=1 python -c 'import heliax as hx; print(hx.native_info())'
 ```
 
-Native dispatch is **not automatic**: it is enabled only with `HELIAX_NATIVE=1`, and the portable NumPy/BLAS path remains the correctness and default reference. Run `python examples/native_benchmark.py` to measure whether a native kernel is actually faster on the target machine. `HELIAX_DISABLE_NATIVE=1` forces the fallback even when a shared library exists.
+Native dispatch is **not automatic**: it is enabled only with `HELIAX_NATIVE=1`, and the portable NumPy/BLAS path remains the correctness and default reference. Run `python examples/native_benchmark.py` and `python scripts/native_report.py` to measure whether a native kernel is actually faster on the target machine. `HELIAX_DISABLE_NATIVE=1` forces the fallback even when a shared library exists.
 
 For a host-tuned multithreaded build, opt in explicitly:
 

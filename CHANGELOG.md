@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.4 — 2026-09-25
+
+### Added
+
+- Three additional pinned PyTorch module references (convolution, normalization, activation).
+- Expanded provenance documentation and verified 20-file BSD snapshot.
+
 ## 0.6.3 — 2026-09-25
 
 ### Added
