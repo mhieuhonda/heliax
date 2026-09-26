@@ -28,6 +28,7 @@ jobs:
       - run: python -m pytest -q
       - run: HELIAX_NATIVE=1 python -m pytest -q
       - run: python scripts/benchmark_smoke.py
+      - run: python scripts/native_report.py
       - run: python -m compileall -q src
 
   package:

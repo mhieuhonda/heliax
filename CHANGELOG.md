@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.9 — 2026-09-25
+
+### Added
+
+- JSON native-vs-portable kernel timing report with CI coverage.
+- Native benchmark documentation now includes a reproducible report command.
+
 ## 0.5.8 — 2026-09-25
 
 ### Added

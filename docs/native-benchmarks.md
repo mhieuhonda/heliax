@@ -9,9 +9,10 @@ Current native kernels: add+ReLU, GELU, last-dimension softmax, fused last-axis 
 ```bash
 python scripts/build_native.py
 python examples/native_benchmark.py
+python scripts/native_report.py
 ```
 
-A scalar C loop can be slower than NumPy/BLAS for small or memory-bound arrays. Heliax therefore keeps NumPy as the default and never silently switches kernels.
+`native_report.py` emits a JSON median-timing comparison for every available kernel and never changes the active backend. A scalar C loop can be slower than NumPy/BLAS for small or memory-bound arrays. Heliax therefore keeps NumPy as the default and never silently switches kernels.
 
 ## Host-tuned OpenMP build
 
