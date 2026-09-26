@@ -69,6 +69,27 @@ def graph_summary(tensor: Tensor) -> dict[str, int]:
     return {"nodes": nodes, "edges": edges, "storage_bytes": storage}
 
 
+def gradient_memory_report(module: object) -> dict[str, int]:
+    """Account for gradient buffers and missing gradients on a module."""
+
+    named_parameters = getattr(module, "named_parameters", None)
+    if not callable(named_parameters):
+        raise TypeError("gradient_memory_report expects a Module with named_parameters()")
+    gradient_bytes = 0
+    present = 0
+    for _, parameter in named_parameters():
+        if parameter.grad is not None:
+            present += 1
+            gradient_bytes += memory_bytes(parameter.grad)
+    total = sum(memory_bytes(parameter) for _, parameter in named_parameters())
+    return {
+        "gradients": present,
+        "gradient_bytes": gradient_bytes,
+        "missing_gradients": max(len(list(named_parameters())) - present, 0),
+        "parameter_plus_gradient_bytes": total + gradient_bytes,
+    }
+
+
 def memory_report(module: object) -> dict[str, int]:
     parameters = getattr(module, "parameters", None)
     if not callable(parameters):
@@ -77,12 +98,33 @@ def memory_report(module: object) -> dict[str, int]:
     buffer_bytes = 0
     for _, buffer in getattr(module, "named_buffers", list)():
         buffer_bytes += int(buffer.nbytes)
-    return {
+    report = {
         "parameters": count_parameters(module),
         "parameter_bytes": parameter_bytes,
         "buffer_bytes": buffer_bytes,
         "total_bytes": parameter_bytes + buffer_bytes,
     }
+    report.update(gradient_memory_report(module))
+    return report
+
+
+def training_memory_report(module: object, loss: Tensor) -> dict[str, int]:
+    """Report retained graph storage plus parameter and gradient storage."""
+
+    if not isinstance(loss, Tensor):
+        raise TypeError("training_memory_report expects a loss Tensor")
+    graph = graph_summary(loss)
+    report = memory_report(module)
+    report.update(
+        {
+            "graph_nodes": graph["nodes"],
+            "graph_edges": graph["edges"],
+            "graph_storage_bytes": graph["storage_bytes"],
+            "total_training_bytes": graph["storage_bytes"]
+            + report["parameter_plus_gradient_bytes"],
+        }
+    )
+    return report
 
 
 def model_summary(module: object) -> list[dict[str, object]]:

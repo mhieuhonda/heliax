@@ -106,12 +106,14 @@ from .precision import GradScaler, autocast
 from .profiler import (
     ProfileResult,
     count_parameters,
+    gradient_memory_report,
     graph_summary,
     memory_bytes,
     memory_report,
     model_summary,
     op_histogram,
     profile,
+    training_memory_report,
 )
 from .quantization import (
     QuantizedLinear,
@@ -143,7 +145,7 @@ from .torch_backend import TorchBackend, get_torch_backend, torch_backend_availa
 from .torch_interop import TorchAccelerator, from_torch, to_torch, torch_available, torch_version
 from .training import Trainer
 
-__version__ = "0.5.1"
+__version__ = "0.5.2"
 
 __all__ = [
     "GELU",
@@ -240,6 +242,7 @@ __all__ = [
     "get_backend",
     "get_torch_backend",
     "gradcheck",
+    "gradient_memory_report",
     "graph_summary",
     "huber_loss",
     "initialization",
@@ -297,6 +300,7 @@ __all__ = [
     "torch_interop",
     "torch_version",
     "training",
+    "training_memory_report",
     "uniform_",
     "where",
     "xavier_uniform_",

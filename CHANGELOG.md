@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.2 — 2026-09-25
+
+### Added
+
+- Gradient memory accounting with missing-gradient detection.
+- `training_memory_report` combining retained graph, parameter, and gradient storage.
+- Profiler regression coverage and documentation refresh.
+
 ## 0.5.1 — 2026-09-25
 
 ### Added

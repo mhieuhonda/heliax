@@ -19,7 +19,7 @@ Heliax does **not** claim to beat PyTorch on every workload. PyTorch has years o
 - NPZ state-dict/checkpoint serialization with persistent buffers and a bounded training loop supporting accumulation and schedulers.
 - Optional `TorchAccelerator` interop behind the `torch` extra; PyTorch is never a required dependency.
 - Opt-in C/ctypes native kernels for add+ReLU, GELU, softmax, LayerNorm, and AdamW.
-- Graph/memory diagnostics, `DistributedSampler`, gradient reduction, ModelEMA, and fan-aware initialization.
+- Graph/memory diagnostics, gradient/training memory accounting, `DistributedSampler`, gradient reduction, ModelEMA, and fan-aware initialization.
 - Activation checkpointing, causal masks, linalg helpers, and explicit `autocast`/`GradScaler` policies.
 - QuantizedLinear inference, fused cross-entropy, and CI-safe benchmark smoke gates.
 - A `helianthus` compatibility namespace re-exports the same core.
