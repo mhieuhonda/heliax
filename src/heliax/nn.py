@@ -941,6 +941,15 @@ class LogSoftmax(Module):
         return F.log_softmax(value, self.axis)
 
 
+class CrossEntropyLoss(Module):
+    def __init__(self, axis: int = -1) -> None:
+        super().__init__()
+        self.axis = axis
+
+    def forward(self, logits: Tensor, target: Any) -> Tensor:
+        return F.fused_cross_entropy(logits, target, self.axis)
+
+
 class Dropout(Module):
     def __init__(self, probability: float = 0.5, *, rng: np.random.Generator | None = None) -> None:
         super().__init__()

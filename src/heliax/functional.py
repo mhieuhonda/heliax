@@ -380,6 +380,45 @@ def cross_entropy(logits: Tensor, target: Any, axis: int = -1) -> Tensor:
     return output
 
 
+def fused_cross_entropy(logits: Tensor, target: Any, axis: int = -1) -> Tensor:
+    """Cross-entropy as one stable forward/backward node on the last axis."""
+
+    if axis not in {-1, logits.ndim - 1}:
+        raise NotImplementedError("fused_cross_entropy currently supports the last axis")
+    target_data = target.numpy() if isinstance(target, Tensor) else np.asarray(target)
+    if target_data.ndim == logits.ndim:
+        target_data = np.argmax(target_data, axis=axis)
+    if target_data.shape != logits.shape[:-1]:
+        target_data = target_data.reshape(logits.shape[:-1])
+    if not np.issubdtype(target_data.dtype, np.integer):
+        rounded = np.rint(target_data)
+        if not np.allclose(target_data, rounded):
+            raise ValueError("class targets must be integer indices")
+        target_data = rounded.astype(np.int64)
+    probabilities = get_backend().softmax(logits.numpy(), axis=axis)
+    index = target_data.astype(np.int64)[..., np.newaxis]
+    selected = np.take_along_axis(probabilities, index, axis=axis)
+    output_data = -np.log(np.maximum(selected, 1e-12)).mean()
+    output = logits._make(
+        np.asarray(output_data, dtype=logits.dtype), (logits,), lambda: None, "fused_cross_entropy"
+    )
+    if output.requires_grad:
+
+        def run_backward() -> None:
+            gradient = probabilities / max(int(target_data.size), 1)
+            selected_probability = np.take_along_axis(gradient, index, axis=axis)
+            np.put_along_axis(
+                gradient,
+                index,
+                selected_probability - (1.0 / max(int(target_data.size), 1)),
+                axis=axis,
+            )
+            _accumulate(logits, gradient)
+
+        output._backward = run_backward
+    return output
+
+
 def fused_linear_bias(
     value: Tensor,
     weight: Tensor,

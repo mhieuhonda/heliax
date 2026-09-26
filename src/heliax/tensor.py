@@ -139,6 +139,12 @@ class Tensor:
     def item(self) -> Any:
         return self._data.item()
 
+    def __float__(self) -> float:
+        return float(self._data.item())
+
+    def __int__(self) -> int:
+        return int(self._data.item())
+
     def __array__(self, dtype: Any | None = None) -> np.ndarray:
         return np.asarray(self._data, dtype=dtype)
 
