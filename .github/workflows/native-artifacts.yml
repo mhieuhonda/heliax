@@ -1,0 +1,39 @@
+name: Build native Heliax artifacts
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  native:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            name: linux-x86_64
+            openmp: "1"
+          - os: macos-latest
+            name: macos-arm64
+            openmp: "0"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build native kernels
+        env:
+          HELIAX_NATIVE_OPENMP: ${{ matrix.openmp }}
+          HELIAX_NATIVE_NATIVE_ARCH: "1"
+        run: python scripts/build_native.py
+      - name: Package shared library
+        run: tar -czf "heliax-native-${{ matrix.name }}.tar.gz" src/heliax/_native.so src/heliax/native_ops.c
+      - uses: actions/upload-artifact@v4
+        with:
+          name: heliax-native-${{ matrix.name }}
+          path: heliax-native-${{ matrix.name }}.tar.gz
