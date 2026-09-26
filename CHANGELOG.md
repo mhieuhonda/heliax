@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.1 — 2026-09-25
+
+### Added
+
+- Native C fused last-axis cross-entropy kernel with normalized gradient buffer.
+- Native dispatch for float32 fused cross entropy and direct kernel regression coverage.
+- Expanded einsum gradients and axis-generic classification coverage.
+
 ## 0.5.0 — 2026-09-25
 
 ### Added

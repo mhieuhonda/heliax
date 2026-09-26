@@ -143,7 +143,7 @@ from .torch_backend import TorchBackend, get_torch_backend, torch_backend_availa
 from .torch_interop import TorchAccelerator, from_torch, to_torch, torch_available, torch_version
 from .training import Trainer
 
-__version__ = "0.5.0"
+__version__ = "0.5.1"
 
 __all__ = [
     "GELU",

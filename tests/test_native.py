@@ -56,6 +56,14 @@ def test_native_kernels_match_numpy_reference():
     )
     assert np.all(parameter < 1.0)
     assert np.all(first > 0.0) and np.all(second > 0.0)
+    targets = np.array([0, 2, 4, 1, 3], dtype=np.int64)
+    logits = rng.normal(size=(5, 5)).astype(np.float32)
+    loss, gradient = hx.native_ops.cross_entropy_lastdim(logits, targets)
+    shifted = logits - np.max(logits, axis=-1, keepdims=True)
+    reference_probabilities = np.exp(shifted) / np.sum(np.exp(shifted), axis=-1, keepdims=True)
+    reference_loss = float(-np.log(reference_probabilities[np.arange(5), targets]).mean())
+    assert np.allclose(loss, reference_loss, atol=1e-5)
+    assert np.allclose(gradient, (reference_probabilities - np.eye(5)[targets]) / 5, atol=1e-5)
 
 
 def test_native_add_relu_gradcheck():

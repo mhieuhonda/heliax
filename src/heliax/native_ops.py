@@ -58,6 +58,14 @@ def _load() -> ctypes.CDLL | None:
             ctypes.c_size_t,
             ctypes.c_size_t,
         ]
+        library.hx_cross_entropy_lastdim.argtypes = [
+            ctypes.POINTER(ctypes.c_float),
+            ctypes.POINTER(ctypes.c_int64),
+            ctypes.POINTER(ctypes.c_float),
+            ctypes.POINTER(ctypes.c_float),
+            ctypes.c_size_t,
+            ctypes.c_size_t,
+        ]
         library.hx_adamw.argtypes = [
             ctypes.POINTER(ctypes.c_float),
             ctypes.POINTER(ctypes.c_float),
@@ -85,6 +93,7 @@ def _load() -> ctypes.CDLL | None:
             "hx_add_relu",
             "hx_gelu",
             "hx_softmax_lastdim",
+            "hx_cross_entropy_lastdim",
             "hx_layernorm_lastdim",
             "hx_adamw",
         ):
@@ -123,7 +132,14 @@ def native_info() -> dict[str, Any]:
         "enabled": native_enabled(),
         "library": str(_library_path()) if library is not None else None,
         "error": _LOAD_ERROR,
-        "kernels": ["add_relu", "gelu", "softmax_lastdim", "layernorm_lastdim", "adamw"],
+        "kernels": [
+            "add_relu",
+            "gelu",
+            "softmax_lastdim",
+            "cross_entropy_lastdim",
+            "layernorm_lastdim",
+            "adamw",
+        ],
     }
 
 
@@ -180,6 +196,32 @@ def softmax_lastdim(value: np.ndarray) -> np.ndarray:
         array.shape[-1],
     )
     return output
+
+
+def cross_entropy_lastdim(logits: np.ndarray, targets: np.ndarray) -> tuple[float, np.ndarray]:
+    library = _load()
+    if library is None:
+        raise RuntimeError(_LOAD_ERROR or "native backend unavailable")
+    array = _float32_view(np.asarray(logits))
+    target_array = np.ascontiguousarray(np.asarray(targets), dtype=np.int64)
+    if array.ndim < 1 or array.shape[-1] == 0:
+        raise ValueError("cross_entropy_lastdim needs a non-empty last dimension")
+    rows = array.size // array.shape[-1]
+    if target_array.size != rows or (
+        target_array.size and (target_array.min() < 0 or target_array.max() >= array.shape[-1])
+    ):
+        raise ValueError("cross entropy targets must contain one valid class index per row")
+    loss = np.zeros(1, dtype=np.float32)
+    gradient = np.empty_like(array)
+    library.hx_cross_entropy_lastdim(
+        array.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
+        target_array.ctypes.data_as(ctypes.POINTER(ctypes.c_int64)),
+        loss.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
+        gradient.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
+        rows,
+        array.shape[-1],
+    )
+    return float(loss[0]), gradient
 
 
 def layernorm_lastdim(

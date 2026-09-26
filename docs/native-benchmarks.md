@@ -2,6 +2,8 @@
 
 The optional C kernels are deliberately opt-in. The numbers below are an example from one CPU container, not a universal claim.
 
+Current native kernels: add+ReLU, GELU, last-dimension softmax, fused last-axis cross entropy, LayerNorm, and AdamW. The fused cross-entropy kernel returns the normalized gradient buffer so the autograd backward avoids rebuilding softmax probabilities.
+
 ## Default portable build
 
 ```bash

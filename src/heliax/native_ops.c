@@ -6,6 +6,7 @@
  */
 #include <math.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #if defined(_OPENMP)
 #include <omp.h>
@@ -49,6 +50,33 @@ void hx_softmax_lastdim(const float *x, float *out, size_t rows, size_t cols) {
         const float inverse = total > 0.0f ? 1.0f / total : 0.0f;
         for (size_t col = 0; col < cols; ++col) dst[col] *= inverse;
     }
+}
+
+void hx_cross_entropy_lastdim(const float *logits, const int64_t *targets,
+                              float *loss, float *gradient, size_t rows,
+                              size_t cols) {
+    float loss_sum = 0.0f;
+    const float inverse_rows = rows > 0 ? 1.0f / (float)rows : 0.0f;
+    #pragma omp parallel for reduction(+ : loss_sum) if (rows > 1)
+    for (size_t row = 0; row < rows; ++row) {
+        const float *src = logits + row * cols;
+        float maximum = src[0];
+        for (size_t col = 1; col < cols; ++col) {
+            if (src[col] > maximum) maximum = src[col];
+        }
+        float exponential_sum = 0.0f;
+        for (size_t col = 0; col < cols; ++col) {
+            exponential_sum += expf(src[col] - maximum);
+        }
+        const float log_normalizer = maximum + logf(exponential_sum);
+        const size_t target = (size_t)targets[row];
+        loss_sum += log_normalizer - src[target];
+        float *dst = gradient + row * cols;
+        for (size_t col = 0; col < cols; ++col) {
+            dst[col] = (expf(src[col] - log_normalizer) - (col == target ? 1.0f : 0.0f)) * inverse_rows;
+        }
+    }
+    *loss = loss_sum * inverse_rows;
 }
 
 void hx_adamw(float *parameter, const float *gradient, float *first_moment,
