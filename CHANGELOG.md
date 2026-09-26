@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.30 — 2026-09-25
+
+### Added
+
+- `QuantizedEmbedding` inference module with persistent integer weights and bounds checking.
+- Quantized embedding regression coverage.
+
 ## 0.6.29 — 2026-09-25
 
 ### Added

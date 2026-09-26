@@ -123,6 +123,7 @@ from .profiler import (
     workspace_memory_report,
 )
 from .quantization import (
+    QuantizedEmbedding,
     QuantizedLinear,
     QuantizedTensor,
     compression_ratio,
@@ -154,7 +155,7 @@ from .training import CheckpointManager, Trainer
 from .workspace import Workspace
 from .workspace import workspace as workspace_context
 
-__version__ = "0.6.29"
+__version__ = "0.6.30"
 
 __all__ = [
     "GELU",
@@ -199,6 +200,7 @@ __all__ = [
     "PositionalEncoding",
     "PrefetchLoader",
     "ProfileResult",
+    "QuantizedEmbedding",
     "QuantizedLinear",
     "QuantizedTensor",
     "RMSProp",

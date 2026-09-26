@@ -34,6 +34,46 @@ class QuantizedTensor:
         return (self.data.astype(np.float32) - self.zero_point) * self.scale
 
 
+class QuantizedEmbedding(Module):
+    """An inference-only embedding table backed by integer weights."""
+
+    def __init__(
+        self,
+        num_embeddings: int,
+        embedding_dim: int,
+        bits: int = 8,
+        *,
+        rng: np.random.Generator | None = None,
+        dtype: Any = np.float32,
+    ) -> None:
+        super().__init__()
+        if num_embeddings <= 0 or embedding_dim <= 0:
+            raise ValueError("QuantizedEmbedding dimensions must be positive")
+        generator = rng or np.random.default_rng()
+        weight = generator.normal(size=(num_embeddings, embedding_dim)).astype(dtype) * dtype(
+            np.sqrt(2.0 / embedding_dim)
+        )
+        packed = quantize(weight, bits=bits, symmetric=True)
+        self.num_embeddings = int(num_embeddings)
+        self.embedding_dim = int(embedding_dim)
+        self.bits = int(bits)
+        self.register_buffer("weight_int8", packed.data)
+        self.register_buffer("scale", np.asarray(packed.scale, dtype=np.float32))
+        self.register_buffer("zero_point", np.asarray(packed.zero_point, dtype=np.int32))
+
+    def forward(self, indices: Tensor | np.ndarray | list[int]) -> Tensor:
+        index_data = (
+            indices.numpy() if isinstance(indices, Tensor) else np.asarray(indices, dtype=np.int64)
+        )
+        if np.any(index_data < 0) or np.any(index_data >= self.num_embeddings):
+            raise IndexError("embedding index out of range")
+        weights = (
+            self._buffers["weight_int8"][index_data].astype(np.float32)
+            - int(self._buffers["zero_point"])
+        ) * float(self._buffers["scale"])
+        return Tensor(weights, requires_grad=False)
+
+
 class QuantizedLinear(Module):
     """An inference-only linear module backed by integer weights."""
 
