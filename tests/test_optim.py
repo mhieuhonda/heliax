@@ -38,6 +38,19 @@ def test_adamw_and_clipping():
     assert np.all(parameter.numpy() < 1.0)
 
 
+def test_adagrad_and_exponential_scheduler():
+    parameter = hx.Parameter(np.ones(3, dtype=np.float32))
+    optimizer = hx.Adagrad([parameter], lr=0.1)
+    parameter.grad = hx.tensor(np.ones(3, dtype=np.float32))
+    optimizer.step()
+    assert np.all(parameter.numpy() < 1.0)
+    scheduler = hx.ExponentialLR(optimizer, gamma=0.5)
+    before = scheduler.get_lr()
+    scheduler.step()
+    scheduler.step()
+    assert scheduler.get_lr() < before
+
+
 def test_schedulers_and_zero_grad():
     parameter = hx.Parameter(np.ones(2, dtype=np.float32))
     optimizer = hx.optim.SGD([parameter], lr=0.1)

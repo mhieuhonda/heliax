@@ -11,6 +11,7 @@ import numpy as np
 from .backend import DEFAULT_DTYPE, get_backend, unbroadcast
 
 _GRAD_ENABLED = True
+_ANOMALY_DETECTION = False
 
 
 @contextmanager
@@ -37,6 +38,23 @@ def enable_grad() -> Iterator[None]:
         yield
     finally:
         _GRAD_ENABLED = previous
+
+
+@contextmanager
+def anomaly_detection(enabled: bool = True) -> Iterator[None]:
+    """Raise when a backward pass produces NaN or infinite gradients."""
+
+    global _ANOMALY_DETECTION
+    previous = _ANOMALY_DETECTION
+    _ANOMALY_DETECTION = bool(enabled)
+    try:
+        yield
+    finally:
+        _ANOMALY_DETECTION = previous
+
+
+def is_anomaly_detection_enabled() -> bool:
+    return _ANOMALY_DETECTION
 
 
 def is_grad_enabled() -> bool:
@@ -198,7 +216,7 @@ class Tensor:
     def zero_grad(self) -> None:
         self.grad = None
 
-    def backward(self, gradient: Any | None = None) -> None:
+    def backward(self, gradient: Any | None = None, *, retain_graph: bool = True) -> None:
         if not self.requires_grad:
             raise RuntimeError("backward() called on a tensor that does not require gradients")
         if gradient is None:
@@ -209,6 +227,8 @@ class Tensor:
             seed = np.asarray(gradient, dtype=self._data.dtype)
             if seed.shape != self.shape:
                 seed = np.broadcast_to(seed, self.shape).copy()
+        if _ANOMALY_DETECTION and not np.all(np.isfinite(seed)):
+            raise FloatingPointError("non-finite gradient at autograd output")
         self.zero_grad()
         self.grad = Tensor(seed.copy(), requires_grad=False)
         nodes: list[Tensor] = []
@@ -226,7 +246,19 @@ class Tensor:
         visit(self)
         for node in reversed(nodes):
             if node.grad is not None and node._op:
+                if _ANOMALY_DETECTION and not np.all(np.isfinite(node.grad.numpy())):
+                    raise FloatingPointError(f"non-finite gradient produced by op {node._op!r}")
                 node._backward()
+            if (
+                node.grad is not None
+                and _ANOMALY_DETECTION
+                and not np.all(np.isfinite(node.grad.numpy()))
+            ):
+                raise FloatingPointError(f"non-finite gradient after op {node._op!r}")
+        if not retain_graph:
+            for node in nodes:
+                node._prev.clear()
+                node._backward = lambda: None
 
     def _binary(
         self, other: Any, operation: Any, backward: Any, op: str, reverse: bool = False
@@ -310,6 +342,26 @@ class Tensor:
     def __neg__(self) -> Tensor:
         return self._unary(lambda x: -x, lambda g, x: -g, "neg")
 
+    def __gt__(self, other: Any) -> Tensor:
+        other_value = other.numpy() if isinstance(other, Tensor) else other
+        return Tensor(self._data > other_value, requires_grad=False)
+
+    def __ge__(self, other: Any) -> Tensor:
+        other_value = other.numpy() if isinstance(other, Tensor) else other
+        return Tensor(self._data >= other_value, requires_grad=False)
+
+    def __lt__(self, other: Any) -> Tensor:
+        other_value = other.numpy() if isinstance(other, Tensor) else other
+        return Tensor(self._data < other_value, requires_grad=False)
+
+    def __le__(self, other: Any) -> Tensor:
+        other_value = other.numpy() if isinstance(other, Tensor) else other
+        return Tensor(self._data <= other_value, requires_grad=False)
+
+    def __eq__(self, other: object) -> Tensor:  # type: ignore[override]
+        other_value = other.numpy() if isinstance(other, Tensor) else other
+        return Tensor(self._data == other_value, requires_grad=False)
+
     def __matmul__(self, other: Any) -> Tensor:
         other_value = other.data if isinstance(other, Tensor) else other
         output = self._make(
@@ -335,6 +387,24 @@ class Tensor:
 
     def square(self) -> Tensor:
         return self._unary(lambda x: x * x, lambda g, x: g * 2 * x, "square")
+
+    def abs(self) -> Tensor:
+        return self._unary(np.abs, lambda g, x: g * np.sign(x), "abs")
+
+    def sign(self) -> Tensor:
+        return self._unary(np.sign, lambda g, x: np.zeros_like(x), "sign")
+
+    def minimum(self, other: Any) -> Tensor:
+        other_tensor = other if isinstance(other, Tensor) else Tensor(other, requires_grad=False)
+        return self._binary(
+            other_tensor, np.minimum, lambda g, a, b: (g * (a <= b), g * (a > b)), "minimum"
+        )
+
+    def maximum(self, other: Any) -> Tensor:
+        other_tensor = other if isinstance(other, Tensor) else Tensor(other, requires_grad=False)
+        return self._binary(
+            other_tensor, np.maximum, lambda g, a, b: (g * (a >= b), g * (a < b)), "maximum"
+        )
 
     def exp(self) -> Tensor:
         backend = get_backend()

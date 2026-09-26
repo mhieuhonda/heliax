@@ -476,6 +476,24 @@ def clip(value: Tensor, minimum: Any, maximum: Any) -> Tensor:
     return output
 
 
+def where(condition: Tensor | np.ndarray, left: Tensor, right: Tensor) -> Tensor:
+    condition_data = (
+        condition.numpy() if isinstance(condition, Tensor) else np.asarray(condition, dtype=bool)
+    )
+    data = np.where(condition_data, left.numpy(), right.numpy())
+    parents = tuple(value for value in (left, right) if value.requires_grad)
+    output = left._make(data, parents, lambda: None, "where")
+    if output.requires_grad:
+
+        def run_backward() -> None:
+            grad = output.grad.numpy()
+            _accumulate(left, np.where(condition_data, grad, 0.0))
+            _accumulate(right, np.where(condition_data, 0.0, grad))
+
+        output._backward = run_backward
+    return output
+
+
 def concatenate(values: list[Tensor], axis: int = 0) -> Tensor:
     if not values:
         raise ValueError("concatenate requires at least one tensor")

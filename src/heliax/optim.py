@@ -93,6 +93,45 @@ class SGD(Optimizer):
                 )
 
 
+class Adagrad(Optimizer):
+    def __init__(
+        self,
+        parameters: Iterable[Parameter],
+        lr: float = 1e-2,
+        eps: float = 1e-8,
+        weight_decay: float = 0.0,
+        initial_accumulator: float = 0.0,
+    ) -> None:
+        super().__init__(
+            parameters,
+            {
+                "lr": float(lr),
+                "eps": float(eps),
+                "weight_decay": float(weight_decay),
+                "initial_accumulator": float(initial_accumulator),
+            },
+        )
+        if lr < 0 or eps <= 0 or weight_decay < 0 or initial_accumulator < 0:
+            raise ValueError("invalid Adagrad hyperparameters")
+
+    def step(self) -> None:
+        options = self.defaults
+        for index, parameter in enumerate(self.parameters):
+            if parameter.grad is None:
+                continue
+            state = self.state.setdefault(index, {})
+            if "sum" not in state:
+                state["sum"] = np.full_like(
+                    parameter._data, options["initial_accumulator"], dtype=np.float32
+                )
+            gradient = parameter.grad.numpy() + options["weight_decay"] * parameter.numpy()
+            state["sum"] += gradient * gradient
+            with no_grad():
+                parameter._data -= (
+                    options["lr"] * gradient / (np.sqrt(state["sum"]) + options["eps"])
+                )
+
+
 class Adam(Optimizer):
     def __init__(
         self,
@@ -280,6 +319,17 @@ class StepLR(LRScheduler):
 
     def _compute_lr(self) -> float:
         return self.base_lrs[0] * (self.gamma ** (self.last_epoch // self.step_size))
+
+
+class ExponentialLR(LRScheduler):
+    def __init__(self, optimizer: Optimizer, gamma: float = 0.9, last_epoch: int = -1) -> None:
+        super().__init__(optimizer, last_epoch)
+        if gamma <= 0:
+            raise ValueError("ExponentialLR gamma must be positive")
+        self.gamma = float(gamma)
+
+    def _compute_lr(self) -> float:
+        return self.base_lrs[0] * (self.gamma**self.last_epoch)
 
 
 class CosineAnnealingLR(LRScheduler):

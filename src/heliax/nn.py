@@ -958,11 +958,12 @@ class Flatten(Module):
         self.end_dim = end_dim
 
     def forward(self, value: Tensor) -> Tensor:
-        if self.start_dim != 1:
-            raise NotImplementedError("Heliax 0.1 Flatten currently supports start_dim=1")
-        if self.end_dim not in (-1, value.ndim - 1):
-            raise NotImplementedError("Heliax 0.1 Flatten currently supports the last dimension")
-        return value.reshape((value.shape[0], -1))
+        start = self.start_dim if self.start_dim >= 0 else value.ndim + self.start_dim
+        end = self.end_dim if self.end_dim >= 0 else value.ndim + self.end_dim
+        if start < 0 or end < start or end >= value.ndim:
+            raise ValueError("Flatten dimensions are out of range")
+        shape = (*value.shape[:start], -1, *value.shape[end + 1 :])
+        return value.reshape(shape)
 
 
 class Sequential(Module):

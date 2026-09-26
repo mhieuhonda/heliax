@@ -38,6 +38,7 @@ from .functional import (
     softmax,
     stack,
     tanh,
+    where,
 )
 from .native_ops import native_available, native_info, reload_native
 from .nn import (
@@ -72,7 +73,17 @@ from .nn import (
     TransformerEncoder,
     TransformerEncoderLayer,
 )
-from .optim import SGD, Adam, AdamW, CosineAnnealingLR, RMSProp, StepLR, clip_grad_norm_
+from .optim import (
+    SGD,
+    Adagrad,
+    Adam,
+    AdamW,
+    CosineAnnealingLR,
+    ExponentialLR,
+    RMSProp,
+    StepLR,
+    clip_grad_norm_,
+)
 from .profiler import (
     ProfileResult,
     count_parameters,
@@ -94,10 +105,12 @@ from .serialization import load_checkpoint, load_state_dict, save_checkpoint, sa
 from .tensor import (
     Parameter,
     Tensor,
+    anomaly_detection,
     arange,
     enable_grad,
     from_numpy,
     full,
+    is_anomaly_detection_enabled,
     is_grad_enabled,
     no_grad,
     ones,
@@ -115,6 +128,7 @@ __all__ = [
     "LSTM",
     "MLP",
     "SGD",
+    "Adagrad",
     "Adam",
     "AdamW",
     "AvgPool2d",
@@ -125,6 +139,7 @@ __all__ = [
     "DataLoader",
     "Dropout",
     "Embedding",
+    "ExponentialLR",
     "Flatten",
     "FusedLinearGELU",
     "GroupNorm",
@@ -154,6 +169,7 @@ __all__ = [
     "TransformerEncoder",
     "TransformerEncoderLayer",
     "add_relu",
+    "anomaly_detection",
     "arange",
     "autograd",
     "available_backends",
@@ -183,6 +199,7 @@ __all__ = [
     "get_backend",
     "gradcheck",
     "graph_summary",
+    "is_anomaly_detection_enabled",
     "is_grad_enabled",
     "load_checkpoint",
     "load_state_dict",
@@ -224,5 +241,6 @@ __all__ = [
     "torch_available",
     "torch_interop",
     "torch_version",
+    "where",
     "zeros",
 ]

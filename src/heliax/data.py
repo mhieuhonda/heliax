@@ -75,33 +75,67 @@ def fit(
     *,
     epochs: int = 1,
     grad_clip: float | None = None,
+    gradient_accumulation_steps: int = 1,
+    scheduler: Any = None,
+    max_steps: int | None = None,
     on_epoch_end: Any = None,
 ) -> list[float]:
-    """Run a compact training loop for a model exposing ``__call__``."""
+    """Run a compact training loop for a model exposing ``__call__``.
+
+    Gradient accumulation, schedulers, clipping, and a global ``max_steps``
+    bound are optional so the default remains a small readable reference loop.
+    """
 
     from .optim import clip_grad_norm_
 
+    if epochs <= 0 or gradient_accumulation_steps <= 0:
+        raise ValueError("epochs and gradient_accumulation_steps must be positive")
+    if max_steps is not None and max_steps <= 0:
+        raise ValueError("max_steps must be positive when provided")
+    parameters = getattr(model, "parameters", list)()
     history: list[float] = []
+    global_steps = 0
+    stop = False
     for epoch in range(epochs):
         model.train()
         total_loss = 0.0
         examples = 0
+        optimizer.zero_grad()
+        pending_batches = 0
         for batch in loader:
             if not batch:
                 continue
             inputs, targets = batch[0], batch[1]
-            optimizer.zero_grad()
             predictions = model(inputs)
             loss = loss_fn(predictions, targets)
-            loss.backward()
-            if grad_clip is not None:
-                clip_grad_norm_(getattr(model, "parameters", list)(), grad_clip)
-            optimizer.step()
+            (loss / gradient_accumulation_steps).backward()
+            pending_batches += 1
             batch_size = inputs.shape[0] if inputs.shape else 1
             total_loss += float(loss.item()) * batch_size
             examples += batch_size
+            if pending_batches == gradient_accumulation_steps:
+                if grad_clip is not None:
+                    clip_grad_norm_(parameters, grad_clip)
+                optimizer.step()
+                optimizer.zero_grad()
+                pending_batches = 0
+                global_steps += 1
+                if scheduler is not None:
+                    scheduler.step()
+                if max_steps is not None and global_steps >= max_steps:
+                    stop = True
+                    break
+        if pending_batches and not stop:
+            if grad_clip is not None:
+                clip_grad_norm_(parameters, grad_clip)
+            optimizer.step()
+            if scheduler is not None:
+                scheduler.step()
+            global_steps += 1
         average = total_loss / max(examples, 1)
         history.append(average)
         if on_epoch_end:
             on_epoch_end(epoch, average, model)
+        if stop:
+            break
     return history
