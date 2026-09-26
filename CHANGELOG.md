@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.3 — 2026-09-25
+
+### Added
+
+- Differentiable one- and two-operand einsum with explicit output specifications.
+- Additional einsum contraction, trace, and transpose regression coverage.
+
 ## 0.4.2 — 2026-09-25
 
 ### Fixed

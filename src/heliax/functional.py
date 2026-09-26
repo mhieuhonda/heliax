@@ -609,6 +609,79 @@ def cosine_similarity(left: Tensor, right: Tensor, axis: int = -1, eps: float = 
     return output
 
 
+def einsum(equation: str, left: Tensor, right: Tensor | None = None) -> Tensor:
+    """One- or two-operand einsum with explicit output and autograd."""
+
+    if "->" not in equation:
+        raise ValueError(
+            "Heliax einsum requires an explicit output specification, e.g. 'ij,jk->ik'"
+        )
+    input_equation, output_equation = equation.split("->", 1)
+    parts = [item.strip() for item in input_equation.split(",")]
+    if not parts or any(not part for part in parts) or len(parts) > 2:
+        raise ValueError("Heliax einsum supports one or two operands")
+    left_equation = parts[0]
+    try:
+        if right is None:
+            data = np.einsum(f"{left_equation}->{output_equation}", left.numpy())
+            parents = (left,)
+        else:
+            right_equation = parts[1]
+            data = np.einsum(
+                f"{left_equation},{right_equation}->{output_equation}", left.numpy(), right.numpy()
+            )
+            parents = (left, right)
+    except ValueError as error:
+        raise ValueError(f"invalid einsum equation: {error}") from error
+    output = left._make(data, parents, lambda: None, "einsum")
+    if output.requires_grad:
+        if right is None:
+
+            def run_backward() -> None:
+                grad = output.grad.numpy()
+                if output_equation == left_equation:
+                    _accumulate(left, grad)
+                elif set(output_equation) == set(left_equation) and len(set(left_equation)) == len(
+                    left_equation
+                ):
+                    _accumulate(left, np.einsum(f"{output_equation}->{left_equation}", grad))
+                elif not output_equation and left.ndim == 1:
+                    _accumulate(left, np.broadcast_to(grad, left.shape).copy())
+                elif not output_equation:
+                    diagonal = np.zeros_like(left.numpy())
+                    diagonal.reshape(-1)[:: left.ndim + 1] = np.asarray(grad)
+                    _accumulate(left, diagonal)
+                else:
+                    raise NotImplementedError(
+                        "this single-operand einsum reduction needs an explicit rule"
+                    )
+
+            output._backward = run_backward
+        else:
+
+            def run_backward() -> None:
+                grad = output.grad.numpy()
+                keep_right = set(right_equation) | set(output_equation)
+                left_output = "".join(label for label in left_equation if label in keep_right)
+                keep_left = set(left_equation) | set(output_equation)
+                right_output = "".join(label for label in right_equation if label in keep_left)
+                _accumulate(
+                    left,
+                    np.einsum(
+                        f"{output_equation},{right_equation}->{left_output}", grad, right.numpy()
+                    ),
+                )
+                _accumulate(
+                    right,
+                    np.einsum(
+                        f"{output_equation},{left_equation}->{right_output}", grad, left.numpy()
+                    ),
+                )
+
+            output._backward = run_backward
+    return output
+
+
 def concatenate(values: list[Tensor], axis: int = 0) -> Tensor:
     if not values:
         raise ValueError("concatenate requires at least one tensor")

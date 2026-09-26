@@ -32,6 +32,7 @@ from .functional import (
     cosine_similarity,
     cross_entropy,
     dropout,
+    einsum,
     embedding,
     fused_cross_entropy,
     fused_linear_bias,
@@ -140,7 +141,7 @@ from .tensor import (
 from .torch_backend import TorchBackend, get_torch_backend, torch_backend_available
 from .torch_interop import TorchAccelerator, from_torch, to_torch, torch_available, torch_version
 
-__version__ = "0.4.2"
+__version__ = "0.4.3"
 
 __all__ = [
     "GELU",
@@ -221,6 +222,7 @@ __all__ = [
     "dequantize_state_dict",
     "distributed",
     "dropout",
+    "einsum",
     "embedding",
     "enable_grad",
     "fit",
