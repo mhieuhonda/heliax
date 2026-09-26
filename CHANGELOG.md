@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.2 — 2026-09-25
+
+### Added
+
+- GroupedConv2d built from composable Conv2d blocks.
+- Additional container, convolution, and regression coverage.
+
 ## 0.3.1 — 2026-09-25
 
 ### Added
