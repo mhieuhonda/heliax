@@ -13,6 +13,8 @@ User code
   ├── optim.Optimizer
   ├── quantization / inference utilities
   ├── torch_interop (optional accelerator facade)
+  ├── native_ops (opt-in C/ctypes kernels)
+  ├── distributed helpers / initialization
   └── serialization / profiler
 
 External reference
@@ -43,6 +45,12 @@ The backend provides array construction, mathematical kernels, matrix multiplica
 - `gradcheck` compares analytical gradients against finite differences.
 - Checkpoint loading validates the expected state-dict keys before applying values.
 
-## Native extension plan
+## Native extension path
 
-A future extension can implement selected kernels behind the same backend interface. Candidate first targets are fused `linear + activation`, normalized cross-entropy, AdamW updates, and contiguous transpose/layout transforms. Each candidate must beat the NumPy baseline on a published benchmark before being enabled by default.
+`src/heliax/native_ops.c` currently provides opt-in C kernels for add+ReLU, GELU, last-dimension softmax, LayerNorm, and AdamW. `native_ops.py` loads the shared library through `ctypes`; the NumPy path remains the default and is selected unless `HELIAX_NATIVE=1` is set.
+
+A future extension can add selected kernels behind the same backend interface. Each candidate must beat the NumPy baseline on a published benchmark before being enabled by default.
+
+## Diagnostics
+
+`profiler.py` exposes graph node/edge counts, retained storage, operation histograms, and parameter/buffer memory reports. `anomaly_detection()` checks gradient finiteness and `retain_graph=False` releases a traversed graph.

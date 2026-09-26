@@ -16,13 +16,20 @@
 - Optional TorchAccelerator and Helianthus namespace
 - Pinned BSD PyTorch reference snapshot with provenance checks
 
-## v0.3 — native acceleration
+## v0.3 — native acceleration and depth
 
-- Optional C ABI extension boundary
-- Fused native linear + activation and normalized cross-entropy candidates
-- Quantized int8 weights for CPU inference
-- Pluggable accelerator capability detection
-- Benchmark-gated native/Torch kernel selection
+- Optional C/ctypes kernels for fused elementwise, normalization, softmax, and AdamW paths
+- Pooling, BatchNorm/GroupNorm, transformer encoder, GRU/LSTM, and module containers
+- Anomaly detection, graph release, memory/op diagnostics
+- Gradient accumulation, schedulers, Adagrad, bounded fit loop, distributed sampler
+- Fan-aware initialization, extra losses, and broader edge-case tests
+
+## v0.4 — memory and kernels
+
+- Strided/contiguous layout policies and reusable workspace buffers
+- More fused forward/backward kernels with benchmark gates
+- Optional quantized inference modules
+- Better mixed-precision scaffolding and dtype policies
 
 ## v1.0 — ecosystem depth
 
