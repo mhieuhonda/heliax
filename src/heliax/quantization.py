@@ -61,6 +61,15 @@ class QuantizedEmbedding(Module):
         self.register_buffer("scale", np.asarray(packed.scale, dtype=np.float32))
         self.register_buffer("zero_point", np.asarray(packed.zero_point, dtype=np.int32))
 
+    @classmethod
+    def from_embedding(cls, embedding: Any, bits: int = 8) -> QuantizedEmbedding:
+        packed = quantize(embedding.weight.numpy(), bits=bits, symmetric=True)
+        layer = cls(embedding.weight.shape[0], embedding.weight.shape[1], bits=bits)
+        layer._buffers["weight_int8"][...] = packed.data
+        layer._buffers["scale"][...] = packed.scale
+        layer._buffers["zero_point"][...] = packed.zero_point
+        return layer
+
     def forward(self, indices: Tensor | np.ndarray | list[int]) -> Tensor:
         index_data = (
             indices.numpy() if isinstance(indices, Tensor) else np.asarray(indices, dtype=np.int64)

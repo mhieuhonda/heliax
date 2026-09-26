@@ -10,3 +10,6 @@ def test_quantized_embedding_inference_and_bounds():
     assert "weight_int8" in layer.state_dict()
     with np.testing.assert_raises(IndexError):
         layer(np.array([8], dtype=np.int64))
+    source = hx.nn.Embedding(8, 4, rng=np.random.default_rng(2))
+    converted = hx.QuantizedEmbedding.from_embedding(source)
+    assert converted(hx.tensor([0, 7], dtype=np.int64)).shape == (2, 4)

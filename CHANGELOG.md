@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.33 — 2026-09-25
+
+### Added
+
+- `QuantizedEmbedding.from_embedding` conversion helper.
+- Regression coverage for embedding quantization conversion.
+
 ## 0.6.32 — 2026-09-25
 
 ### Added
